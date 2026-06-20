@@ -213,3 +213,331 @@ ${jobSpec}
 ---`,
   };
 }
+
+export function buildCareerDocumentPrompt(data: {
+  documentType: string;
+  title: string;
+  tone: string;
+  length: "short" | "medium" | "long";
+  resumeContext?: string;
+  customFields?: Record<string, string>;
+}): PromptPayload {
+  const { documentType, tone, length, resumeContext, customFields = {} } = data;
+
+  const lengthGuideline = length === "short" ? "extremely concise and focused, direct to the point." :
+                          length === "long" ? "highly detailed, elaborate, and structured with multiple paragraphs." : 
+                          "balanced length, professional, standard layout.";
+
+  // Detailed guidelines per document type
+  let typeGuideline = "";
+  switch (documentType) {
+    case "cover_letter":
+      typeGuideline = "Write a tailored cover letter demonstrating interest, matching experience to target requirements, and expressing fit. Include placeholders like [Hiring Manager Name] or [Company Name] if not provided in inputs. Keep it styled like a professional business letter.";
+      break;
+    case "cold_email":
+      typeGuideline = "Write a compelling cold outreach email to a hiring manager or executive. Use a catchy subject line, articulate value immediately, make a specific ask, and keep it extremely easy to read and respond to.";
+      break;
+    case "referral_email":
+      typeGuideline = "Write a warm referral request email to a contact, alumni, or connection. Acknowledge the relationship or mutual touchpoint, state the target role, summarize why you are qualified, and request a brief conversation or referral introduction.";
+      break;
+    case "recruiter_follow_up":
+      typeGuideline = "Write a professional follow-up email to a recruiter regarding an active application. Restate interest, ask about the timeline/next steps, and highlight any recent qualifications or updates.";
+      break;
+    case "thank_you_email":
+      typeGuideline = "Write a thank-you email following an interview. Express appreciation to the interviewers, reference a specific topic discussed to show active listening, and reiterate enthusiasm for the position.";
+      break;
+    case "interview_follow_up":
+      typeGuideline = "Write a follow-up email after an interview when the timeline for feedback has passed. Remain highly polite, express continued interest, and ask if there are updates or additional details required.";
+      break;
+    case "resignation_letter":
+      typeGuideline = "Write a formal resignation letter. Maintain a polite and professional tone, state the resignation decision, specify the last day of work (e.g., standard 2 weeks notice), offer to assist in transition, and express gratitude for the opportunities.";
+      break;
+    case "linkedin_about":
+      typeGuideline = "Generate a highly engaging LinkedIn 'About' summary. Utilize first-person narrative, list core expertise, highlight notable accomplishments, state your professional mission, and add a call to action or contact point.";
+      break;
+    case "professional_bio":
+      typeGuideline = "Generate a versatile professional biography suitable for a portfolio website, conference description, or team profile. Include background, current activities, and professional impact.";
+      break;
+    case "sop":
+      typeGuideline = "Write a Statement of Purpose (SOP) for graduate school or academic programs. Clearly detail academic background, research interests, career aspirations, and reasons for choosing this university and program.";
+      break;
+    case "personal_statement":
+      typeGuideline = "Write a personal statement detailing personal motivation, overcoming challenges, academic achievements, and future goals.";
+      break;
+    case "recommendation_draft":
+      typeGuideline = "Draft a Letter of Recommendation. Write from the perspective of a manager, advisor, or mentor. Highlight the applicant's technical capabilities, work ethic, accomplishments, and potential.";
+      break;
+    case "scholarship_letter":
+      typeGuideline = "Write a scholarship application letter. Detail financial need (if applicable), academic merit, career ambitions, and how the scholarship will support your education.";
+      break;
+    case "internship_letter":
+      typeGuideline = "Write a application cover letter for an internship. Focus on enthusiasm, rapid learning ability, university studies, and relevant coursework or projects.";
+      break;
+    case "grad_school_letter":
+      typeGuideline = "Write a graduate school application cover letter. Detail academic projects, research alignment with professors, and readiness for advanced study.";
+      break;
+    case "freelance_proposal":
+      typeGuideline = "Write a client proposal for a freelance contract. Detail understanding of the client's problem, outline your proposed solution/deliverables, highlight relevant past work, and state next steps.";
+      break;
+    case "consulting_proposal":
+      typeGuideline = "Write a comprehensive consulting proposal. Outline scope of work, methodology, value proposition, timeline/phases, and business benefits.";
+      break;
+    case "client_intro":
+      typeGuideline = "Write a client introduction email or letter. Introduce your agency/services, address a common paint point they face, and request a discovery call.";
+      break;
+    default:
+      typeGuideline = "Generate a professional career document following the specified instructions.";
+  }
+
+  // Gather custom fields
+  let customFieldsStr = "";
+  if (Object.keys(customFields).length > 0) {
+    customFieldsStr = "\nCustom Inputs Provided:\n" + Object.entries(customFields)
+      .map(([key, val]) => `- ${key}: ${val}`)
+      .join("\n");
+  }
+
+  return {
+    system: `You are an expert executive career writer and professional documents architect. 
+Your goal is to write a highly polished, professional, and tailored document for a candidate's career progression.
+Document Type: ${documentType.toUpperCase().replace(/_/g, " ")}.
+Desired Tone Style: "${tone}".
+Length Guideline: ${lengthGuideline}
+
+Follow these instructions strictly:
+1. Adopt the requested tone: "${tone}"
+2. Output ONLY the raw document text. No markdown header titles, no surrounding quotes, no introductory notes, no metadata descriptions, and no concluding developer commentary.
+3. If placeholders are necessary (e.g. for contact details or missing inputs), use square brackets like [Candidate Name], [Hiring Manager], or [Company Name].
+4. Format paragraphs clearly with double newlines (\n\n) between them.`,
+    user: `Generate this document based on the following input context:
+- Document Title: ${data.title}
+- Document-Specific Instructions: ${typeGuideline}
+${resumeContext ? `\n- Candidate's Resume Profile Context:\n${resumeContext}` : ""}
+${customFieldsStr}
+`,
+  };
+}
+
+export function buildMockInterviewQuestionPrompt(data: {
+  jobRole: string;
+  company?: string;
+  industry?: string;
+  experienceLevel: string;
+  difficulty: string;
+  interviewType: string;
+  resumeContext?: string;
+  currentQuestionsText?: string;
+}): PromptPayload {
+  const { jobRole, company, industry, experienceLevel, difficulty, interviewType, resumeContext, currentQuestionsText } = data;
+  
+  const compStr = company ? ` at company: ${company}` : "";
+  const indStr = industry ? ` in industry: ${industry}` : "";
+  
+  return {
+    system: `You are an elite executive interviewer, technical lead, and talent acquisition specialist.
+Your goal is to generate one highly targeted, challenging mock interview question matching the parameters:
+- Target Job Role: ${jobRole}${compStr}${indStr}
+- Experience Level: ${experienceLevel}
+- Difficulty: ${difficulty}
+- Interview Type: ${interviewType.toUpperCase().replace(/_/g, " ")}
+
+Guidelines:
+1. Generate EXACTLY ONE question.
+2. Ensure the question is extremely realistic, modern, and aligned with standard top-tier company practices (e.g. FAANG, tier-1 consultancies, startups).
+3. If it's a Coding Interview type, provide a coding challenge statement with input/output constraints.
+4. If it's a System Design type, ask for structural architecture of a scalable service.
+5. If it's Behavioral or Leadership, focus on scenarios testing conflict resolution, ownership, and STAR-style recall.
+6. Do NOT output any preamble, greeting, markdown formatting headers, or notes. Output ONLY the raw question text.
+${currentQuestionsText ? `7. Avoid duplicating these previous questions: \n${currentQuestionsText}` : ""}`,
+    user: `Generate the next mock interview question.
+${resumeContext ? `\nCandidate's Background context:\n${resumeContext}` : ""}`
+  };
+}
+
+export function buildAnswerEvaluationPrompt(data: {
+  questionText: string;
+  userAnswer: string;
+  category: string;
+  jobRole: string;
+  experienceLevel: string;
+}): PromptPayload {
+  const { questionText, userAnswer, category, jobRole, experienceLevel } = data;
+
+  return {
+    system: `You are an expert AI Interview Evaluation Coach and Senior HR Director.
+Your task is to analyze the candidate's answer to a mock interview question and output a detailed evaluation in JSON format.
+Analyze based on:
+- Clarity of language and structure
+- Technical accuracy (if technical/system design/coding)
+- Relevance and confidence of tone
+- Compliance with the STAR method (Situation, Task, Action, Result) - especially for behavioral/HR questions
+
+You MUST return a valid JSON object matching this exact structure:
+{
+  "overallScore": number, // 0 to 100
+  "clarityScore": number, // 0 to 100
+  "confidenceScore": number, // 0 to 100
+  "relevanceScore": number, // 0 to 100
+  "technicalScore": number, // 0 to 100 (default same as overall if HR/behavioral)
+  "starEvaluation": {
+    "situation": "string detailing situation evaluation or N/A",
+    "task": "string detailing task evaluation or N/A",
+    "action": "string detailing action evaluation or N/A",
+    "result": "string detailing result evaluation or N/A"
+  },
+  "generalFeedback": "string summarizing evaluation",
+  "strengths": "string listing positive points",
+  "weaknesses": "string listing gaps/weak points",
+  "missedPoints": string[], // things that should have been mentioned
+  "suggestedImprovement": "string on how to polish this answer",
+  "betterAnswer": "string showing a high-scoring rewrite of how the candidate should have answered"
+}
+Return ONLY valid JSON. No markdown backticks, no comments, no leading/trailing explanations.`,
+    user: `Evaluate the answer for:
+- Role: ${jobRole} (${experienceLevel})
+- Category: ${category}
+- Question: ${questionText}
+- Candidate's Answer: "${userAnswer}"`
+  };
+}
+
+export function buildCareerCoachPrompt(data: {
+  userMessage: string;
+  chatHistoryText?: string;
+  resumeContext?: string;
+}): PromptPayload {
+  const { userMessage, chatHistoryText, resumeContext } = data;
+  
+  return {
+    system: `You are a Principal AI Career Coach, Staff Executive Mentor, and Career Intelligence Advisor.
+Your objective is to provide professional, actionable, and strategically sound career advice to the user.
+Help the user with topics like:
+- Career transition guidance (switching industries/technologies)
+- Promotion guidelines and manager negotiations
+- Resume/LinkedIn profile advice
+- Skill gap acquisition strategy
+- Networking tips
+
+Guidelines:
+1. Maintain a encouraging, professional, structured, and realistic tone.
+2. Use concise paragraphs and bullet points.
+3. Be specific; avoid generic advice like "be confident". Provide concrete actions (e.g. "Draft an email outlining X, Y, Z", "Target these 3 certifications").
+4. If a resume is attached, reference specific details from their background.`,
+    user: `${chatHistoryText ? `Here is the conversation history:\n${chatHistoryText}\n` : ""}
+${resumeContext ? `Candidate Background Profile:\n${resumeContext}\n` : ""}
+User message: "${userMessage}"
+Coach response:`
+  };
+}
+
+export function buildCareerRoadmapPrompt(data: {
+  currentSkills: string[];
+  goal: string;
+  timeline?: string;
+  budget?: string;
+  resumeContext?: string;
+}): PromptPayload {
+  const { currentSkills, goal, timeline, budget, resumeContext } = data;
+  
+  return {
+    system: `You are a Senior Career Path Architect and Learning & Development Specialist.
+Your task is to generate a comprehensive, highly customized career transition roadmap from the candidate's current state to their target goal in JSON.
+Analyze:
+- Skills to bridge (skill gap)
+- Milestone steps with estimated completion times
+- Tailored learning resources (courses, books, practice platforms)
+
+You MUST return a valid JSON object matching this exact structure:
+{
+  "milestones": [
+    {
+      "title": "string (Milestone title)",
+      "description": "string (Details of what to learn/achieve)",
+      "estimatedTime": "string (e.g. 4 weeks, 2 months)",
+      "resources": string[]
+    }
+  ],
+  "certifications": string[], // Recommended professional credentials
+  "skillsToAcquire": string[], // Focus skills
+  "books": string[], // Recommended books
+  "courses": string[], // Recommended course titles/platforms
+  "projects": string[] // Suggested portfolio projects to build
+}
+Return ONLY valid JSON. No markdown backticks, no comments, no leading/trailing explanations.`,
+    user: `Generate a career transition roadmap:
+- Current Skills: ${currentSkills.join(", ") || "Not provided"}
+- Career Goal Target: ${goal}
+- Target Timeline: ${timeline || "12 months"}
+- Budget Range: ${budget || "Flexible"}
+${resumeContext ? `\nResume Context:\n${resumeContext}` : ""}`
+  };
+}
+
+export function buildSalaryEstimationPrompt(data: {
+  role: string;
+  location?: string;
+  industry?: string;
+  experience?: string;
+  resumeContext?: string;
+}): PromptPayload {
+  const { role, location, industry, experience, resumeContext } = data;
+
+  return {
+    system: `You are a Principal Global Compensation Analyst and Salary Intelligence Expert.
+Analyze market salary dynamics and return a compensation estimation report in JSON.
+Return realistic, up-to-date ranges (reflecting high, low, and median boundaries) for the job role in USD (or converted appropriate local currency if specified).
+
+You MUST return a valid JSON object matching this exact structure:
+{
+  "rangeMin": number, // Yearly numeric value in USD (e.g. 90000)
+  "rangeMax": number, // Yearly numeric value in USD (e.g. 150000)
+  "rangeMedian": number, // Yearly numeric value in USD (e.g. 120000)
+  "trendData": {
+    "growthTrend": "string describing market trend (e.g. Strong upward growth of +8% YoY)",
+    "marketDemand": "high" | "medium" | "low",
+    "benefits": string[] // typical perks/allowances for this role
+  },
+  "negotiationTips": string[] // 3-4 specific negotiation leverage tactics
+}
+Return ONLY valid JSON. No markdown backticks, no comments, no leading/trailing explanations.`,
+    user: `Estimate salary insights for:
+- Role: ${role}
+- Location: ${location || "Remote / Global"}
+- Industry: ${industry || "Technology"}
+- Experience: ${experience || "Mid-level"}
+${resumeContext ? `\nResume Context:\n${resumeContext}` : ""}`
+  };
+}
+
+export function buildGoalTrackerPrompt(data: {
+  title: string;
+  targetDate?: string;
+  currentSkills?: string[];
+  resumeContext?: string;
+}): PromptPayload {
+  const { title, targetDate, currentSkills, resumeContext } = data;
+  
+  return {
+    system: `You are a Personal Productivity and Career Achievement Coach.
+Your task is to analyze the user's career goal and suggest 3-5 concrete, actionable milestones to hit before the deadline.
+
+You MUST return a valid JSON object matching this exact structure:
+{
+  "milestones": [
+    {
+      "title": "string (Milestone title)",
+      "description": "string (Brief concrete step details)",
+      "estimatedTime": "string (e.g. 2 weeks)"
+    }
+  ],
+  "aiSuggestions": string[] // General strategic actions to keep focus
+}
+Return ONLY valid JSON. No markdown backticks, no comments, no leading/trailing explanations.`,
+    user: `Generate milestones for goal:
+- Title: ${title}
+- Deadline: ${targetDate || "Not specified"}
+- Skills: ${currentSkills?.join(", ") || "Not specified"}
+${resumeContext ? `\nResume background:\n${resumeContext}` : ""}`
+  };
+}
+

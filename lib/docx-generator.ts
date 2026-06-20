@@ -386,3 +386,51 @@ export async function generateDocx(resume: Resume): Promise<Blob> {
 
   return await Packer.toBlob(doc);
 }
+
+export async function generateDocumentDocx(title: string, content: string): Promise<Blob> {
+  const paragraphs = content.split(/\n+/).map((pText) => {
+    return new Paragraph({
+      spacing: { after: 120, line: 276 }, // 1.15 line spacing
+      children: [
+        new TextRun({
+          text: pText.trim(),
+          size: 22, // 11pt
+          font: "Calibri",
+        }),
+      ],
+    });
+  });
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: 1440, // 1 inch
+              bottom: 1440,
+              left: 1440,
+              right: 1440,
+            },
+          },
+        },
+        children: [
+          new Paragraph({
+            spacing: { after: 240 },
+            children: [
+              new TextRun({
+                text: title,
+                bold: true,
+                size: 28, // 14pt
+                font: "Calibri",
+              }),
+            ],
+          }),
+          ...paragraphs,
+        ],
+      },
+    ],
+  });
+
+  return await Packer.toBlob(doc);
+}

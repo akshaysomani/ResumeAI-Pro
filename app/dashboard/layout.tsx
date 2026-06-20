@@ -24,6 +24,8 @@ import {
   X,
   LogOut,
   ChevronRight,
+  Video,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,8 +40,10 @@ const sidebarItems: SidebarItem[] = [
   { name: "My Resumes", href: "/dashboard/resumes", icon: FileText },
   { name: "Templates", href: "/templates", icon: Palette },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Sparkles },
-  { name: "Cover Letters", href: "/dashboard/cover-letters", icon: Mail },
+  { name: "Career Documents", href: "/dashboard/documents", icon: Mail },
   { name: "Job Matcher", href: "/dashboard/job-matcher", icon: Target },
+  { name: "Interview Prep", href: "/dashboard/interview", icon: Video },
+  { name: "Career Coach", href: "/dashboard/coach", icon: MessageSquare },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },

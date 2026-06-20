@@ -17,6 +17,10 @@ import {
   TrendingUp,
   Award,
   Zap,
+  Video,
+  CheckSquare,
+  Briefcase,
+  MessageSquare,
 } from "lucide-react";
 import type { Resume } from "@/types";
 
@@ -25,6 +29,10 @@ export default function DashboardPage() {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [credits, setCredits] = useState({ used: 0, limit: 5 });
+  const [avgInterviewScore, setAvgInterviewScore] = useState<number | null>(null);
+  const [activeGoalCount, setActiveGoalCount] = useState<number>(0);
+  const [avgGoalProgress, setAvgGoalProgress] = useState<number>(0);
+  const [latestSalary, setLatestSalary] = useState<{ role: string; median: number } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -75,6 +83,51 @@ export default function DashboardPage() {
 
         if (!usageError && count !== null) {
           setCredits({ used: count, limit: 5 });
+        }
+
+        // Fetch Mock Interview statistics
+        const { data: interviewData } = await supabase
+          .from("interview_sessions")
+          .select("overall_score")
+          .eq("user_id", user.id)
+          .eq("status", "completed");
+
+        if (interviewData && interviewData.length > 0) {
+          const completed = interviewData.filter((i: any) => i.overall_score !== null);
+          if (completed.length > 0) {
+            const avg = Math.round(completed.reduce((acc: number, curr: any) => acc + curr.overall_score, 0) / completed.length);
+            setAvgInterviewScore(avg);
+          }
+        }
+
+        // Fetch Goals details
+        const { data: goalData } = await supabase
+          .from("career_goals")
+          .select("progress, status")
+          .eq("user_id", user.id);
+
+        if (goalData) {
+          const active = goalData.filter((g: any) => g.status === "active");
+          setActiveGoalCount(active.length);
+          if (active.length > 0) {
+            const avgProg = Math.round(active.reduce((acc: number, curr: any) => acc + curr.progress, 0) / active.length);
+            setAvgGoalProgress(avgProg);
+          }
+        }
+
+        // Fetch Salary report details
+        const { data: salaryData } = await supabase
+          .from("salary_reports")
+          .select("range_median, role")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (salaryData && salaryData.length > 0) {
+          setLatestSalary({
+            role: salaryData[0].role,
+            median: parseFloat(salaryData[0].range_median)
+          });
         }
       } catch (err) {
         console.warn("Could not retrieve dashboard tables, showing offline layout:", err);
@@ -158,20 +211,20 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              AI Credits Remaining
+              AI Mock Interview Score
             </CardTitle>
-            <Sparkles className="h-4.5 w-4.5 text-amber-500" />
+            <Video className="h-4.5 w-4.5 text-indigo-500" />
           </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
               <div className="text-2xl font-bold">
-                {credits.limit - credits.used} / {credits.limit}
+                {avgInterviewScore !== null ? `${avgInterviewScore}%` : "N/A"}
               </div>
             )}
             <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">
-              Refreshes daily on free tier
+              Ready index of active interview preps
             </p>
           </CardContent>
         </Card>
@@ -179,20 +232,21 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              Active Tier
+              Active Career Goals
             </CardTitle>
-            <Zap className="h-4.5 w-4.5 text-indigo-500" />
+            <CheckSquare className="h-4.5 w-4.5 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-1.5">
-              <span>Free Plan</span>
-            </div>
-            <Link
-              href="/pricing"
-              className="text-[10px] text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium inline-flex items-center gap-0.5 mt-1"
-            >
-              Upgrade to Pro <ArrowRight className="h-3 w-3" />
-            </Link>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">
+                {activeGoalCount} ({avgGoalProgress}% avg)
+              </div>
+            )}
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">
+              Tracked milestones completion
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -311,6 +365,49 @@ export default function DashboardPage() {
                 <CardContent className="p-4 pt-0">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
                     Generate professional summary copy, bullet points, or project descriptions instantly with our editor AI.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/dashboard/coach" className="block">
+              <Card className="hover:border-indigo-500/30 transition-all dark:hover:border-indigo-400/30">
+                <CardHeader className="p-4 pb-2 flex flex-row items-center gap-3 space-y-0">
+                  <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+                    <MessageSquare className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-bold">AI Career Coach</CardTitle>
+                    <CardDescription className="text-[11px]">
+                      Chat with career mentors
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                    {latestSalary ? `Salary Benchmark: $${(latestSalary.median / 1000).toFixed(0)}k median for ${latestSalary.role}. ` : ""}
+                    Get promotion playbooks, custom roadmaps, and salary negotiation guides.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/dashboard/interview" className="block">
+              <Card className="hover:border-emerald-500/30 transition-all dark:hover:border-emerald-400/30">
+                <CardHeader className="p-4 pb-2 flex flex-row items-center gap-3 space-y-0">
+                  <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                    <Video className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-bold">Mock Interview Console</CardTitle>
+                    <CardDescription className="text-[11px]">
+                      HR, behavioral & tech prep
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                    Practice timed questions, outline system design specs, and check your STAR scores.
                   </p>
                 </CardContent>
               </Card>

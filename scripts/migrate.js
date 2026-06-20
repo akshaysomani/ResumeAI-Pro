@@ -77,6 +77,14 @@ async function runMigration() {
   
   try {
     await client.connect();
+
+    // Create schema_migrations tracking table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.schema_migrations (
+        filename text PRIMARY KEY,
+        applied_at timestamp with time zone DEFAULT now() NOT NULL
+      );
+    `);
     
     const migrationsDir = path.join(__dirname, "../migrations");
     if (!fs.existsSync(migrationsDir)) {
@@ -87,14 +95,71 @@ async function runMigration() {
       .filter((file) => file.endsWith(".sql"))
       .sort(); // Sort alphabetically to execute in correct sequence
 
-    console.log(`Found ${files.length} migration file(s) to execute.`);
+    console.log(`Found ${files.length} migration file(s) available.`);
+
+    // Bootstrap tracker: check which tables exist to mark migrations as already applied
+    const tableExists = async (table) => {
+      const res = await client.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' AND table_name = $1
+        )
+      `, [table]);
+      return res.rows[0].exists;
+    };
+
+    const bootstrapFiles = async () => {
+      if (await tableExists("profiles")) {
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('001_init_schema.sql') ON CONFLICT DO NOTHING");
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('002_schema_enhancement.sql') ON CONFLICT DO NOTHING");
+      }
+      if (await tableExists("settings")) {
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('003_editor_theme_config.sql') ON CONFLICT DO NOTHING");
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('004_user_template_preferences.sql') ON CONFLICT DO NOTHING");
+      }
+      // Check if ai_generations table exists
+      if (await tableExists("ai_generations")) {
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('005_ai_generation_resume_ref.sql') ON CONFLICT DO NOTHING");
+      }
+      // Check if ats_analyses table exists
+      if (await tableExists("ats_analyses")) {
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('006_ats_matcher_enhancements.sql') ON CONFLICT DO NOTHING");
+      }
+      // Check if public_resume_links table exists
+      if (await tableExists("public_resume_links")) {
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('007_resume_sharing_and_exports.sql') ON CONFLICT DO NOTHING");
+      }
+      // Check if career_documents table exists
+      if (await tableExists("career_documents")) {
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ('008_career_documents_suite.sql') ON CONFLICT DO NOTHING");
+      }
+    };
+
+    await bootstrapFiles();
+
+    // Query applied migrations
+    const { rows } = await client.query("SELECT filename FROM public.schema_migrations");
+    const applied = new Set(rows.map((r) => r.filename));
 
     for (const file of files) {
-      const filePath = path.join(migrationsDir, file);
+      if (applied.has(file)) {
+        console.log(`Migration already applied: ${file} (Skipping)`);
+        continue;
+      }
+
       console.log(`Executing migration file: ${file}...`);
-      const schemaSql = fs.readFileSync(filePath, "utf8");
-      await client.query(schemaSql);
-      console.log(`Successfully completed migration: ${file}`);
+      const schemaSql = fs.readFileSync(filePath = path.join(migrationsDir, file), "utf8");
+      
+      await client.query("BEGIN");
+      try {
+        await client.query(schemaSql);
+        await client.query("INSERT INTO public.schema_migrations (filename) VALUES ($1)", [file]);
+        await client.query("COMMIT");
+        console.log(`Successfully completed migration: ${file}`);
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      }
     }
     
     console.log("All migrations executed successfully.");

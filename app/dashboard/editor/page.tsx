@@ -4,6 +4,9 @@ import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useResume } from "@/components/resume-provider";
 import { useToast } from "@/components/ui/toast";
+import { useAuth } from "@/components/auth-provider";
+import { MessageSquare } from "lucide-react";
+import CollaborationEditorPanel from "@/components/admin/collaboration-editor-panel";
 import { ResumePreviewCanvas } from "@/components/resume-preview-canvas";
 import { analyzeAtsHints, type AtsHint } from "@/lib/atsAnalyzer";
 import { Button } from "@/components/ui/button";
@@ -79,6 +82,9 @@ import type { Resume, ResumeSection, SectionType } from "@/types";
 export default function ResumeEditorPage() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("id") || "editor-workspace";
+
+  const { user } = useAuth();
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   const {
     currentResume,
@@ -1045,6 +1051,20 @@ export default function ResumeEditorPage() {
             <Download className="h-3.5 w-3.5" />
             <span>Export & Share</span>
           </div>
+
+          {/* Comments and Reviews custom tab */}
+          <div
+            onClick={() => setActiveSection("comments" as any)}
+            className={cn(
+              "flex items-center gap-2 p-2 rounded-lg text-xs font-semibold cursor-pointer border transition-all mt-1 select-none",
+              activeSection === ("comments" as any)
+                ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+                : "border-transparent hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-300"
+            )}
+          >
+            <MessageSquare className="h-3.5 w-3.5 text-zinc-500 group-hover:text-indigo-400 transition-colors" />
+            <span>Comments & Reviews</span>
+          </div>
         </div>
 
         {/* ATS Realtime Trigger Button */}
@@ -1068,7 +1088,16 @@ export default function ResumeEditorPage() {
       />
 
       {/* CENTER PANEL: EDITING FORMS WORKSPACE */}
-      <div className="flex-1 bg-white dark:bg-zinc-950 p-6 overflow-y-auto h-full text-left">
+      <div className="flex-1 bg-white dark:bg-zinc-950 p-6 overflow-y-auto h-full text-left relative">
+        {isReadOnly && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
+            <div className="bg-zinc-900 border border-red-500/20 p-5 rounded-xl text-center space-y-3 max-w-xs shadow-xl">
+              <Lock className="w-8 h-8 text-red-500 mx-auto" />
+              <h4 className="text-xs font-bold text-zinc-100 uppercase tracking-wider">Locked: Read Only</h4>
+              <p className="text-[11px] text-zinc-400 font-sans">This document is currently being edited by another team member. Your edits are locked to prevent overwrite conflicts.</p>
+            </div>
+          </div>
+        )}
         
         {/* Dynamic Forms header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4 mb-6">
@@ -3009,6 +3038,16 @@ export default function ResumeEditorPage() {
 
             </div>
           </div>
+        )}
+
+        {activeSection === ("comments" as any) && currentResume?.id && (
+          <CollaborationEditorPanel
+            resumeId={currentResume.id}
+            workspaceId={currentResume.workspaceId || "personal-workspace"}
+            userId={user?.id || "anonymous-uid"}
+            userName={user?.email?.split("@")[0] || "Team Member"}
+            onLockChange={(locked) => setIsReadOnly(locked)}
+          />
         )}
       </div>
 
