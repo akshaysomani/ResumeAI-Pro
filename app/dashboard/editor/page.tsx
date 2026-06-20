@@ -19,6 +19,25 @@ import {
   addRecentTemplateAction,
 } from "@/app/actions/templateActions";
 import {
+  saveShareSettingsAction,
+  getShareSettingsAction,
+  getShareAnalyticsDataAction,
+  logResumeExportAction,
+  getResumeExportHistoryAction,
+  getResumeVersionsAction,
+  sendResumeEmailAction,
+} from "@/app/actions/shareActions";
+import { generateDocx } from "@/lib/docx-generator";
+import { generatePlainText } from "@/lib/text-generator";
+import QRCode from "qrcode";
+import {
+  Download,
+  Printer,
+  Lock,
+  Mail,
+  FileText,
+  Copy,
+  Info,
   Undo2,
   Redo2,
   Save,
@@ -55,7 +74,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ResumeSection, SectionType } from "@/types";
+import type { Resume, ResumeSection, SectionType } from "@/types";
 
 export default function ResumeEditorPage() {
   const searchParams = useSearchParams();
@@ -87,7 +106,7 @@ export default function ResumeEditorPage() {
 
   // Zoom and layout settings
   const [zoom, setZoom] = useState(0.8);
-  const [activeSection, setActiveSection] = useState<SectionType | "design" | "templates">("personal");
+  const [activeSection, setActiveSection] = useState<SectionType | "design" | "templates" | "export">("personal");
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
 
   // ATS Optimization Drawer states
@@ -143,6 +162,288 @@ export default function ResumeEditorPage() {
   // AI ATS Analyzer State
   const [aiAtsLoading, setAiAtsLoading] = useState(false);
   const [aiAtsReport, setAiAtsReport] = useState<any>(null);
+
+  // Share & Export states
+  const [shareSettings, setShareSettings] = useState<any>({
+    visibility: "private",
+    uniqueSlug: "",
+    expiration: "",
+    downloadAllowed: true,
+    printAllowed: true,
+    isIndexable: true,
+    password: "",
+  });
+  const [shareSettingsLoading, setShareSettingsLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [exportHistory, setExportHistory] = useState<any[]>([]);
+  const [versionsList, setVersionsList] = useState<any[]>([]);
+  const [qrBgColor, setQrBgColor] = useState("#ffffff");
+  const [qrFgColor, setQrFgColor] = useState("#000000");
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [exportFormat, setExportFormat] = useState("pdf");
+  const [customFilename, setCustomFilename] = useState("");
+
+  // Email Share Form
+  const [emailForm, setEmailForm] = useState({
+    recipient: "",
+    subject: "Sharing my professional resume",
+    message: "Hi,\n\nPlease find the link to my professional resume below. Looking forward to your feedback!\n\n",
+  });
+  const [emailSending, setEmailSending] = useState(false);
+
+  // Fetch share and exports data when export section is active
+  useEffect(() => {
+    if (activeSection === "export" && currentResume?.id) {
+      getShareSettingsAction(currentResume.id).then((settings) => {
+        if (settings) {
+          setShareSettings({
+            visibility: settings.visibility,
+            uniqueSlug: settings.uniqueSlug,
+            expiration: settings.expiration ? settings.expiration.split("T")[0] : "",
+            downloadAllowed: settings.downloadAllowed,
+            printAllowed: settings.printAllowed,
+            isIndexable: settings.isIndexable,
+            password: "",
+          });
+          
+          const linkUrl = `${window.location.origin}/share/${settings.uniqueSlug}`;
+          QRCode.toDataURL(linkUrl, {
+            color: { dark: qrFgColor, light: qrBgColor },
+            width: 300,
+          }).then((url) => setQrDataUrl(url));
+        }
+      });
+
+      getShareAnalyticsDataAction(currentResume.id).then((data) => {
+        if (data) setAnalyticsData(data);
+      });
+
+      getResumeExportHistoryAction(currentResume.id).then((history) => {
+        setExportHistory(history);
+      });
+
+      getResumeVersionsAction(currentResume.id).then((versions) => {
+        setVersionsList(versions);
+      });
+
+      setCustomFilename(`${currentResume.title.replace(/\s+/g, "_")}_resume`);
+    }
+  }, [activeSection, currentResume?.id, qrBgColor, qrFgColor]);
+
+  const handleSaveShareSettings = async () => {
+    if (!currentResume) return;
+    setShareSettingsLoading(true);
+    try {
+      const res = await saveShareSettingsAction(currentResume.id, {
+        visibility: shareSettings.visibility,
+        password: shareSettings.password,
+        expiration: shareSettings.expiration || null,
+        downloadAllowed: shareSettings.downloadAllowed,
+        printAllowed: shareSettings.printAllowed,
+        isIndexable: shareSettings.isIndexable,
+        uniqueSlug: shareSettings.uniqueSlug,
+      });
+
+      if (res.success && res.slug) {
+        success("Sharing settings updated successfully.");
+        const linkUrl = `${window.location.origin}/share/${res.slug}`;
+        const url = await QRCode.toDataURL(linkUrl, {
+          color: { dark: qrFgColor, light: qrBgColor },
+          width: 300,
+        });
+        setQrDataUrl(url);
+      } else {
+        error(res.error || "Failed to update sharing settings.");
+      }
+    } catch (err) {
+      error("Failed to save sharing preferences.");
+    } finally {
+      setShareSettingsLoading(false);
+    }
+  };
+
+  const trackDownloadInDB = (format: string) => {
+    if (!currentResume) return;
+    logResumeExportAction(
+      currentResume.id,
+      format,
+      currentResume.templateId || "modern",
+      20000,
+      1
+    );
+    // Reload export history
+    getResumeExportHistoryAction(currentResume.id).then((history) => {
+      setExportHistory(history);
+    });
+  };
+
+  const handleExportPdf = () => {
+    if (!currentResume) return;
+    trackDownloadInDB("pdf");
+    window.print();
+  };
+
+  const handleExportDocx = async () => {
+    if (!currentResume) return;
+    if (userPlan !== "pro") {
+      setUpgradeDialogOpen(true);
+      return;
+    }
+    try {
+      trackDownloadInDB("docx");
+      const blob = await generateDocx(currentResume);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${customFilename || "resume"}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      error("Docx compilation failed.");
+    }
+  };
+
+  const handleExportHtml = () => {
+    if (!currentResume) return;
+    trackDownloadInDB("html");
+    const plainText = generatePlainText(currentResume);
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>` + currentResume.title + `</title>
+        <style>
+          body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #1f2937; }
+          pre { white-space: pre-wrap; font-family: inherit; }
+        </style>
+      </head>
+      <body>
+        <pre>` + plainText + `</pre>
+      </body>
+      </html>
+    `;
+    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${customFilename || "resume"}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportText = () => {
+    if (!currentResume) return;
+    trackDownloadInDB("txt");
+    const text = generatePlainText(currentResume);
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${customFilename || "resume"}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSendShareEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailForm.recipient.trim() || !currentResume) return;
+    setEmailSending(true);
+
+    try {
+      const shareUrl = `${window.location.origin}/share/${shareSettings.uniqueSlug}`;
+      const res = await sendResumeEmailAction({
+        recipientEmail: emailForm.recipient,
+        subject: emailForm.subject,
+        message: `${emailForm.message}\n\nAccess Link: ${shareUrl}`,
+        resumeLink: shareUrl,
+      });
+
+      if (res.success) {
+        success("Email dispatched to recruiter successfully.");
+        setEmailForm((prev) => ({ ...prev, recipient: "" }));
+      } else {
+        error(res.error || "Failed to dispatch email.");
+      }
+    } catch (err) {
+      error("Failed to send email notice.");
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const handleExportVersion = async (version: any, format: string) => {
+    if (!currentResume) return;
+    try {
+      const vData = version.resumeData;
+      const mockResume: Resume = {
+        id: currentResume.id,
+        userId: currentResume.userId,
+        title: vData.resume?.title || currentResume.title,
+        description: vData.resume?.description || "",
+        templateId: vData.resume?.template_id || "modern",
+        createdAt: version.createdAt,
+        updatedAt: version.createdAt,
+        isPublic: false,
+        sections: [
+          { id: "v-pers", resumeId: currentResume.id, sectionType: "personal", title: "Personal", orderIndex: 0, content: vData.personal || {} },
+          { id: "v-summ", resumeId: currentResume.id, sectionType: "summary", title: "Summary", orderIndex: 1, content: { text: vData.resume?.description || "" } },
+          { id: "v-edu", resumeId: currentResume.id, sectionType: "education", title: "Education", orderIndex: 2, content: vData.education || [] },
+          { id: "v-exp", resumeId: currentResume.id, sectionType: "experience", title: "Experience", orderIndex: 3, content: vData.experience || [] },
+          { id: "v-skil", resumeId: currentResume.id, sectionType: "skills", title: "Skills", orderIndex: 4, content: vData.skills || [] },
+          { id: "v-proj", resumeId: currentResume.id, sectionType: "projects", title: "Projects", orderIndex: 5, content: vData.projects || [] },
+        ],
+        status: "draft",
+        isFavorite: false,
+        isArchived: false,
+        colorTheme: vData.resume?.color_theme || "indigo",
+        fontFamily: vData.resume?.font_family || "sans",
+        paperSize: vData.resume?.paper_size || "A4",
+        pageMargin: vData.resume?.page_margin || "normal",
+        layoutStyle: vData.resume?.layout_style || "single-column",
+        resumeType: vData.resume?.resume_type || "custom",
+      };
+
+      if (format === "pdf") {
+        error("Direct printing is only supported on the active canvas. Please export as Word Document or Text instead.");
+        return;
+      }
+
+      if (format === "docx") {
+        const blob = await generateDocx(mockResume);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${customFilename || "resume"}_v${version.versionNumber}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        success(`Downloaded Version ${version.versionNumber} Word Document.`);
+      }
+
+      if (format === "txt") {
+        const text = generatePlainText(mockResume);
+        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${customFilename || "resume"}_v${version.versionNumber}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        success(`Downloaded Version ${version.versionNumber} Plain Text.`);
+      }
+    } catch (err) {
+      error("Failed to compile version details.");
+    }
+  };
 
   // Load custom width sizes from localStorage
   useEffect(() => {
@@ -729,6 +1030,20 @@ export default function ResumeEditorPage() {
           >
             <Sliders className="h-3.5 w-3.5" />
             <span>Theme Configuration</span>
+          </div>
+
+          {/* Export & Share custom tab */}
+          <div
+            onClick={() => setActiveSection("export")}
+            className={cn(
+              "flex items-center gap-2 p-2 rounded-lg text-xs font-semibold cursor-pointer border transition-all mt-1 select-none",
+              activeSection === "export"
+                ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+                : "border-transparent hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-300"
+            )}
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Export & Share</span>
           </div>
         </div>
 
@@ -2240,6 +2555,461 @@ export default function ResumeEditorPage() {
             </div>
           </div>
         )}
+
+        {/* 14. EXPORT & SHARING PANEL */}
+        {activeSection === "export" && (
+          <div className="space-y-6 text-left">
+            <div className="grid gap-6 md:grid-cols-2">
+              
+              {/* Left Column: Form Controls */}
+              <div className="space-y-6">
+                
+                {/* Download and Export formats */}
+                <Card className="p-4 border dark:border-zinc-850">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-3">Download & Export Options</span>
+                  
+                  <div className="space-y-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Export Format</label>
+                        <select
+                          value={exportFormat}
+                          onChange={(e) => setExportFormat(e.target.value)}
+                          className="w-full h-9 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none dark:border-zinc-800 dark:bg-zinc-950"
+                        >
+                          <option value="pdf">PDF Document (A4/Letter)</option>
+                          <option value="docx">Microsoft Word (.docx)</option>
+                          <option value="html">Single Webpage (.html)</option>
+                          <option value="txt">Plain ASCII Text (.txt)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Filename</label>
+                        <Input
+                          value={customFilename}
+                          onChange={(e) => setCustomFilename(e.target.value)}
+                          placeholder="johndoe_resume"
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Paper Dimension</label>
+                        <select
+                          value={currentResume.paperSize || "A4"}
+                          onChange={(e) => updateResumeMetadata({ paperSize: e.target.value })}
+                          className="w-full h-9 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none dark:border-zinc-800 dark:bg-zinc-950"
+                        >
+                          <option value="A4">A4 (Standard 210x297mm)</option>
+                          <option value="Letter">US Letter (8.5x11in)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Page Margin</label>
+                        <select
+                          value={currentResume.pageMargin || "normal"}
+                          onChange={(e) => updateResumeMetadata({ pageMargin: e.target.value })}
+                          className="w-full h-9 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none dark:border-zinc-800 dark:bg-zinc-950"
+                        >
+                          <option value="compact">Compact (Narrow Margins)</option>
+                          <option value="normal">Normal Margins</option>
+                          <option value="wide">Spacious (Wide Margins)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {exportFormat === "docx" && userPlan !== "pro" && (
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-600 font-medium">
+                        ⚠️ **Pro Plan Feature:** Word document (.docx) download is restricted to Pro members.
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={() => {
+                        if (exportFormat === "pdf") handleExportPdf();
+                        if (exportFormat === "docx") handleExportDocx();
+                        if (exportFormat === "html") handleExportHtml();
+                        if (exportFormat === "txt") handleExportText();
+                      }}
+                      className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                    >
+                      <Download className="mr-1.5 h-4 w-4" />
+                      Generate & Export Document
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* Sharing Visibility Settings */}
+                <Card className="p-4 border dark:border-zinc-850">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-3">Public Resume Sharing</span>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase">Unique Slug Link</label>
+                      <div className="flex gap-2">
+                        <span className="flex items-center px-2 bg-zinc-100 dark:bg-zinc-900 border dark:border-zinc-800 text-[10px] text-zinc-400 rounded-lg select-none">
+                          /share/
+                        </span>
+                        <Input
+                          value={shareSettings.uniqueSlug}
+                          onChange={(e) => setShareSettings({ ...shareSettings, uniqueSlug: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") })}
+                          className="h-9 text-xs flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Visibility Level</label>
+                        <select
+                          value={shareSettings.visibility}
+                          onChange={(e) => setShareSettings({ ...shareSettings, visibility: e.target.value })}
+                          className="w-full h-9 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none dark:border-zinc-800 dark:bg-zinc-950"
+                        >
+                          <option value="private">Private (Restricted Access)</option>
+                          <option value="public">Public (Anyone with link)</option>
+                          <option value="password">Password Protected</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Expiration Date</label>
+                        <Input
+                          type="date"
+                          value={shareSettings.expiration}
+                          onChange={(e) => {
+                            if (userPlan !== "pro") {
+                              setUpgradeDialogOpen(true);
+                              return;
+                            }
+                            setShareSettings({ ...shareSettings, expiration: e.target.value });
+                          }}
+                          disabled={userPlan !== "pro"}
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {shareSettings.expiration && userPlan !== "pro" && (
+                      <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[10px] text-amber-600 font-semibold">
+                        ⚠️ **Pro Plan Feature:** Links expiration dates require a Pro subscription.
+                      </div>
+                    )}
+
+                    {shareSettings.visibility === "password" && (
+                      <div className="space-y-1.5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border dark:border-zinc-800">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Access Password</label>
+                        <Input
+                          type="password"
+                          placeholder={shareSettings.exists ? "(Unchanged - type to modify)" : "Choose password"}
+                          value={shareSettings.password}
+                          onChange={(e) => {
+                            if (userPlan !== "pro") {
+                              setUpgradeDialogOpen(true);
+                              return;
+                            }
+                            setShareSettings({ ...shareSettings, password: e.target.value });
+                          }}
+                          disabled={userPlan !== "pro"}
+                          className="h-9 text-xs"
+                        />
+                        {userPlan !== "pro" && (
+                          <div className="p-2 rounded bg-amber-500/10 text-[10px] text-amber-600 font-semibold mt-1">
+                            ⚠️ Password protection is a Pro premium feature.
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="space-y-2 border-t dark:border-zinc-900 pt-3">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={shareSettings.downloadAllowed}
+                          onChange={(e) => setShareSettings({ ...shareSettings, downloadAllowed: e.target.checked })}
+                          className="rounded border-zinc-300 dark:border-zinc-800 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                        />
+                        <span>Allow recruiters to download formats (Word/Text)</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={shareSettings.printAllowed}
+                          onChange={(e) => setShareSettings({ ...shareSettings, printAllowed: e.target.checked })}
+                          className="rounded border-zinc-300 dark:border-zinc-800 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                        />
+                        <span>Allow printing or exporting directly to PDF</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={shareSettings.isIndexable}
+                          onChange={(e) => setShareSettings({ ...shareSettings, isIndexable: e.target.checked })}
+                          className="rounded border-zinc-300 dark:border-zinc-800 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                        />
+                        <span>Request search engines to index shared link page</span>
+                      </label>
+                    </div>
+
+                    <Button
+                      onClick={handleSaveShareSettings}
+                      isLoading={shareSettingsLoading}
+                      className="w-full h-9 text-xs font-bold"
+                    >
+                      <Save className="mr-1 h-3.5 w-3.5" />
+                      Save Sharing Preferences
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* Share Direct Recruiter Email */}
+                {shareSettings.visibility !== "private" && (
+                  <Card className="p-4 border dark:border-zinc-850">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-3">Email Resume to Recruiter</span>
+                    <form onSubmit={handleSendShareEmail} className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Recipient Email</label>
+                        <Input
+                          type="email"
+                          placeholder="recruiter@company.com"
+                          value={emailForm.recipient}
+                          onChange={(e) => setEmailForm({ ...emailForm, recipient: e.target.value })}
+                          required
+                          className="h-9 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Subject</label>
+                        <Input
+                          value={emailForm.subject}
+                          onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+                          required
+                          className="h-9 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Message</label>
+                        <Textarea
+                          value={emailForm.message}
+                          onChange={(e) => setEmailForm({ ...emailForm, message: e.target.value })}
+                          required
+                          rows={4}
+                          className="text-xs"
+                        />
+                      </div>
+
+                      <Button
+                        type="submit"
+                        isLoading={emailSending}
+                        className="w-full h-9 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        <Mail className="mr-1.5 h-4 w-4" />
+                        Send Resume Link
+                      </Button>
+                    </form>
+                  </Card>
+                )}
+
+              </div>
+
+              {/* Right Column: Previews, QR, and Analytics */}
+              <div className="space-y-6">
+                
+                {/* QR Code Card */}
+                {shareSettings.visibility !== "private" && qrDataUrl && (
+                  <Card className="p-4 border dark:border-zinc-850 flex flex-col items-center text-center">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-3 self-start">Interactive QR Code</span>
+                    
+                    <div className="p-4 bg-white rounded-xl border border-zinc-200 dark:border-zinc-850 shadow-sm flex items-center justify-center max-w-[200px] w-full">
+                      <img src={qrDataUrl} alt="Resume Share QR Code" className="w-full h-auto object-contain" />
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2 mt-4 w-full text-left">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-zinc-500 uppercase">QR Fg Color</label>
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="color"
+                            value={qrFgColor}
+                            onChange={(e) => setQrFgColor(e.target.value)}
+                            className="h-8 w-12 p-0.5 cursor-pointer rounded border"
+                          />
+                          <span className="text-[10px] font-semibold">{qrFgColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-zinc-500 uppercase">QR Bg Color</label>
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="color"
+                            value={qrBgColor}
+                            onChange={(e) => setQrBgColor(e.target.value)}
+                            className="h-8 w-12 p-0.5 cursor-pointer rounded border"
+                          />
+                          <span className="text-[10px] font-semibold">{qrBgColor}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 mt-4 w-full">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const a = document.createElement("a");
+                          a.href = qrDataUrl;
+                          a.download = `${customFilename || "resume"}_qr.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                        }}
+                        className="flex-1 h-9 text-xs font-semibold"
+                      >
+                        Download PNG
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/share/${shareSettings.uniqueSlug}`);
+                          success("Shared URL copied to clipboard!");
+                        }}
+                        className="flex-1 h-9 text-xs font-semibold"
+                      >
+                        <Copy className="mr-1 h-3.5 w-3.5" />
+                        Copy Link
+                      </Button>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Engagement Analytics */}
+                {analyticsData && (
+                  <Card className="p-4 border dark:border-zinc-850">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-3">Engagement Analytics</span>
+                    
+                    <div className="grid grid-cols-3 gap-3 text-center mb-4">
+                      <div className="p-2.5 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border dark:border-zinc-850">
+                        <span className="text-[9px] font-bold text-zinc-400 uppercase">Views</span>
+                        <div className="text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{analyticsData.totalViews}</div>
+                      </div>
+                      <div className="p-2.5 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border dark:border-zinc-850">
+                        <span className="text-[9px] font-bold text-zinc-400 uppercase">Downloads</span>
+                        <div className="text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{analyticsData.totalDownloads}</div>
+                      </div>
+                      <div className="p-2.5 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border dark:border-zinc-850">
+                        <span className="text-[9px] font-bold text-zinc-400 uppercase">Scans</span>
+                        <div className="text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{analyticsData.totalScans}</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-[9px] font-bold text-zinc-400 uppercase block mb-1">Referrers Breakdown</span>
+                        {analyticsData.referrers.length === 0 ? (
+                          <p className="text-[10px] text-zinc-400 italic">No views registered yet.</p>
+                        ) : (
+                          <div className="space-y-1.5 max-h-[100px] overflow-y-auto">
+                            {analyticsData.referrers.map((ref: any, i: number) => (
+                              <div key={i} className="flex justify-between items-center text-[10px] border-b pb-0.5 dark:border-zinc-800">
+                                <span className="text-zinc-500 font-semibold">{ref.name}</span>
+                                <span className="font-extrabold">{ref.value} view(s)</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <span className="text-[9px] font-bold text-zinc-400 uppercase block mb-1">Device / Browser</span>
+                        <div className="grid gap-4 grid-cols-2 text-[10px]">
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-semibold text-zinc-400">Device</span>
+                            {analyticsData.devices.map((d: any, idx: number) => (
+                              <div key={idx} className="flex justify-between border-b pb-0.5 dark:border-zinc-800">
+                                <span className="text-zinc-500">{d.name}</span>
+                                <span className="font-extrabold">{d.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-semibold text-zinc-400">Browser</span>
+                            {analyticsData.browsers.map((b: any, idx: number) => (
+                              <div key={idx} className="flex justify-between border-b pb-0.5 dark:border-zinc-800">
+                                <span className="text-zinc-500">{b.name}</span>
+                                <span className="font-extrabold">{b.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Export History Log */}
+                {exportHistory.length > 0 && (
+                  <Card className="p-4 border dark:border-zinc-850">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Download History</span>
+                    <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
+                      {exportHistory.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center text-[10px] border-b pb-1 dark:border-zinc-800">
+                          <div>
+                            <span className="font-bold text-zinc-700 dark:text-zinc-350 capitalize">{item.fileType} Export</span>
+                            <span className="text-[9px] text-zinc-400 block">Template: {item.templateId} • v{item.resumeVersion}</span>
+                          </div>
+                          <span className="text-zinc-400 text-[9px]">{new Date(item.createdAt).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Version History snapshot lists */}
+                {versionsList.length > 0 && (
+                  <Card className="p-4 border dark:border-zinc-850">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Export Previous Snapshots</span>
+                    <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
+                      {versionsList.map((ver) => (
+                        <div key={ver.id} className="flex justify-between items-center text-[10px] border-b pb-1.5 dark:border-zinc-800">
+                          <div>
+                            <span className="font-bold">Version #{ver.versionNumber}</span>
+                            <span className="text-[9px] text-zinc-400 block">{new Date(ver.createdAt).toLocaleString()}</span>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleExportVersion(ver, "docx")}
+                              className="h-6 text-[8px] px-1.5 font-bold border-zinc-200 dark:border-zinc-800"
+                            >
+                              Word
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleExportVersion(ver, "txt")}
+                              className="h-6 text-[8px] px-1.5 font-bold border-zinc-200 dark:border-zinc-800"
+                            >
+                              Text
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
 
       {/* DRAGDIVIDER RIGHT */}
@@ -2291,7 +3061,7 @@ export default function ResumeEditorPage() {
 
         {/* Preview canvas viewport */}
         <div className="flex-1 flex justify-center p-6 overflow-y-auto min-h-0 bg-zinc-100 dark:bg-zinc-900/10">
-          <ResumePreviewCanvas resume={currentResume} zoom={zoom} previewTemplateId={previewTemplateId} />
+          <ResumePreviewCanvas resume={currentResume} zoom={zoom} previewTemplateId={previewTemplateId} showWatermark={userPlan !== "pro"} />
         </div>
       </div>
 

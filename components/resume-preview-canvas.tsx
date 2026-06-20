@@ -29,9 +29,15 @@ interface ResumePreviewCanvasProps {
   resume: Resume;
   zoom: number; // e.g. 0.75, 1, 1.25
   previewTemplateId?: string | null;
+  showWatermark?: boolean;
 }
 
-export function ResumePreviewCanvas({ resume, zoom, previewTemplateId = null }: ResumePreviewCanvasProps) {
+export function ResumePreviewCanvas({
+  resume,
+  zoom,
+  previewTemplateId = null,
+  showWatermark = false,
+}: ResumePreviewCanvasProps) {
   // 1. Fetch active template config and merge with user overrides
   const activeTemplateId = previewTemplateId || resume.templateId || "modern";
   const templateConfig = getTemplateConfig(activeTemplateId);
@@ -850,6 +856,13 @@ export function ResumePreviewCanvas({ resume, zoom, previewTemplateId = null }: 
     >
       {renderPersonalHeader()}
       {renderLayout()}
+
+      {showWatermark && (
+        <div className="mt-8 pt-4 border-t border-zinc-150 dark:border-zinc-900 text-center select-none flex items-center justify-center gap-1.5 text-[9px] text-zinc-400 font-bold tracking-widest uppercase">
+          <Sparkles className="h-3 w-3 text-indigo-500 fill-indigo-500" />
+          <span>Created with ResumeAI Pro</span>
+        </div>
+      )}
 
       {/* Dotted Page break helpers (only visible inside digital web canvas layout preview, hidden in print mode) */}
       <div className="absolute inset-x-0 pointer-events-none print:hidden flex flex-col items-center justify-between" style={{ height: "100%", top: 0 }}>
