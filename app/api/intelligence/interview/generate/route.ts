@@ -128,17 +128,27 @@ export async function POST(req: NextRequest) {
       currentQuestionsText
     });
 
+    // Pre-insert a pending question row to acquire its database ID synchronously before returning the stream
+    const insertRes = await db.query(
+      `INSERT INTO public.interview_questions (session_id, question_text, category, created_at)
+       VALUES ($1, 'AI is crafting question...', $2, NOW())
+       RETURNING id`,
+      [sessionId, session.interview_type]
+    );
+    const newQuestionId = insertRes.rows[0].id;
+
     const providerConfig = getProviderConfig();
     const stream = await getAIStream(payload, providerConfig, async (fullText) => {
-      // Log newly generated question to the database on completion
+      // Update the question text on completion
       try {
         await db.query(
-          `INSERT INTO public.interview_questions (session_id, question_text, category, created_at)
-           VALUES ($1, $2, $3, NOW())`,
-          [sessionId, fullText, session.interview_type]
+          `UPDATE public.interview_questions 
+           SET question_text = $1 
+           WHERE id = $2`,
+          [fullText, newQuestionId]
         );
       } catch (dbErr) {
-        console.error("Failed to persist generated interview question:", dbErr);
+        console.error("Failed to update generated interview question:", dbErr);
       }
     });
 
@@ -147,6 +157,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache",
         "Connection": "keep-alive",
+        "X-Question-Id": newQuestionId.toString(),
       },
     });
   } catch (error: any) {

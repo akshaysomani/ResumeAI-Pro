@@ -348,8 +348,12 @@ Guidelines:
 4. If it's a System Design type, ask for structural architecture of a scalable service.
 5. If it's Behavioral or Leadership, focus on scenarios testing conflict resolution, ownership, and STAR-style recall.
 6. Do NOT output any preamble, greeting, markdown formatting headers, or notes. Output ONLY the raw question text.
-${currentQuestionsText ? `7. Avoid duplicating these previous questions: \n${currentQuestionsText}` : ""}`,
+7. Avoid duplicating any previously asked questions in this session.`,
     user: `Generate the next mock interview question.
+${currentQuestionsText ? `It is CRITICAL that you do NOT repeat or ask any of these previously asked questions in this session. You must ask a completely different, new question:
+---
+${currentQuestionsText}
+---` : ""}
 ${resumeContext ? `\nCandidate's Background context:\n${resumeContext}` : ""}`
   };
 }

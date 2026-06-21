@@ -278,7 +278,7 @@ export default function PublicDocumentSharePage({ params }: SharePageProps) {
       </div>
 
       {/* 2. Paper Sheet View */}
-      <div className="max-w-3xl mx-auto bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm p-8 md:p-12 min-h-[500px] flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:text-black">
+      <div className="max-w-3xl print:max-w-full mx-auto bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 rounded-2xl shadow-sm p-8 md:p-12 min-h-[500px] flex flex-col justify-between print:border-none print:shadow-none print:p-0 print:text-black">
         {/* Document content */}
         <div>
           {/* Header Metadata */}

@@ -74,7 +74,11 @@ create trigger on_auth_user_created
 ---------------------------------------------------------
 -- 4. STORAGE BUCKET CONFIGURATION FOR AVATARS
 ---------------------------------------------------------
--- In Supabase Storage, create a public bucket called "avatars".
+-- Create the public bucket called "avatars" if it does not exist.
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
 -- Below are the RLS Policies for the storage.objects table to secure files.
 
 -- Policy: Anyone can select/read profile photos from avatars bucket

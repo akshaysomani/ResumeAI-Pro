@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getResumeAction, saveResumeFullAction } from "@/app/actions/resumeActions";
+import { getResumeAction, saveResumeFullAction, queryResumesAction } from "@/app/actions/resumeActions";
 import {
   Target,
   CheckCircle2,
@@ -70,10 +70,9 @@ export default function JobMatcherPage() {
       const res = await fetch("/api/ai/usage");
       if (res.ok) {
         const data = await res.json();
-        // Since we are validating matching limits, we override limit to 1 scan per day for free users in Job description matcher
         setDailyUsage({
           count: data.count,
-          limit: 1,
+          limit: 9999, // Unused since it's free
           plan: data.plan
         });
       }
@@ -104,30 +103,27 @@ export default function JobMatcherPage() {
 
     const fetchResumes = async () => {
       try {
-        const { data, error: dbError } = await supabase
-          .from("resumes")
-          .select("id, title")
-          .eq("user_id", user.id);
+        const data = await queryResumesAction({ userId: user.id });
 
-        if (!dbError && data) {
+        if (data) {
           const list: Resume[] = data.map((r: any) => ({
             id: r.id,
             userId: user.id,
             title: r.title,
-            templateId: "modern",
-            createdAt: "",
-            updatedAt: "",
-            isPublic: false,
+            templateId: r.templateId || "modern",
+            createdAt: r.createdAt || "",
+            updatedAt: r.updatedAt || "",
+            isPublic: r.isPublic || false,
             sections: [],
-            status: "draft",
-            isFavorite: false,
-            isArchived: false,
-            colorTheme: "indigo",
-            fontFamily: "sans",
-            paperSize: "A4",
-            pageMargin: "normal",
-            layoutStyle: "single-column",
-            resumeType: "custom",
+            status: r.status || "draft",
+            isFavorite: r.isFavorite || false,
+            isArchived: r.isArchived || false,
+            colorTheme: r.colorTheme || "indigo",
+            fontFamily: r.fontFamily || "sans",
+            paperSize: r.paperSize || "A4",
+            pageMargin: r.pageMargin || "normal",
+            layoutStyle: r.layoutStyle || "single-column",
+            resumeType: r.resumeType || "custom",
           }));
           setResumes(list);
           if (list.length > 0) {
@@ -489,26 +485,13 @@ export default function JobMatcherPage() {
               </div>
 
               {/* Limit notices info */}
-              <div className="p-3 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900 rounded-lg flex items-center justify-between">
+              <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900 rounded-lg flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400">Scans Remaining:</span>
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">ATS Score Scan:</span>
                   <p className="text-[9px] text-zinc-500 mt-0.5 leading-relaxed">
-                    {dailyUsage.plan === "pro" ? (
-                      <span className="text-indigo-600 font-bold">Pro (Unlimited Scans)</span>
-                    ) : (
-                      <span>{Math.max(0, dailyUsage.limit - dailyUsage.count)} / {dailyUsage.limit} scan left today</span>
-                    )}
+                    <span className="text-emerald-600 font-bold">Free & Unlimited Scans</span>
                   </p>
                 </div>
-                {dailyUsage.plan === "free" && (
-                  <Button
-                    size="sm"
-                    className="h-6 text-[8px] bg-gradient-to-r from-amber-500 to-indigo-600 text-white font-bold"
-                    onClick={() => success("Redirecting to billing plans...")}
-                  >
-                    Go Pro
-                  </Button>
-                )}
               </div>
 
               <Button

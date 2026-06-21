@@ -43,20 +43,60 @@ export default function AIAssistantPage() {
     setInput("");
     setGenerating(true);
 
+    const botMsgId = `bot-${Date.now()}`;
+    const initialBotMsg: ChatMessage = {
+      id: botMsgId,
+      sender: "bot",
+      text: "",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, initialBotMsg]);
+
     try {
-      // Simulation of AI response (Edge function call placeholder)
-      setTimeout(() => {
-        const botMsg: ChatMessage = {
-          id: `bot-${Date.now()}`,
-          sender: "bot",
-          text: `Here is an optimized recommendation based on your prompt: \n\n"Orchestrated development of high-throughput web applications with Next.js, achieving a 35% decrease in page layout shifts and scaling user capacity to 10k+ active sessions."`,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, botMsg]);
-        setGenerating(false);
-      }, 1500);
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sectionType: "generic",
+          payload: {
+            sectionType: "AI Career Assistant",
+            instructions: text,
+            tone: "professional",
+          },
+          resumeId: null,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Request failed with status ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader on response body");
+
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        fullText += chunk;
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMsgId ? { ...msg, text: fullText } : msg
+          )
+        );
+      }
     } catch (err: any) {
-      error("Failed to generate AI content.");
+      error(err.message || "Failed to generate AI content.");
+      setMessages((prev) => prev.filter((msg) => msg.id !== botMsgId));
+    } finally {
       setGenerating(false);
     }
   };

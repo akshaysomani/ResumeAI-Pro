@@ -32,7 +32,7 @@ export function getProviderConfig(): AIProviderConfig {
 export async function getAIStream(
   payload: PromptPayload,
   config: AIProviderConfig,
-  onComplete?: (fullText: string) => void
+  onComplete?: (fullText: string) => Promise<void> | void
 ): Promise<ReadableStream<Uint8Array>> {
   const { provider, apiKey, model } = config;
   const temp = 0.3;
@@ -164,7 +164,7 @@ export async function getAIStream(
         }
         
         if (onComplete) {
-          onComplete(mockContent);
+          await onComplete(mockContent);
         }
         controller.close();
       }
@@ -219,7 +219,7 @@ export async function getAIStream(
               processLine(buffer.trim(), controller);
             }
             if (onComplete) {
-              onComplete(fullText);
+              await onComplete(fullText);
             }
             controller.close();
             break;
@@ -250,6 +250,112 @@ export async function getAIStream(
 function getMockAIContent(payload: PromptPayload): string {
   const sys = payload.system.toLowerCase();
   const usr = payload.user.toLowerCase();
+
+  // 0. Mock Interview Question Generation
+  const isInterviewQuestion = sys.includes("elite executive interviewer") || 
+                              sys.includes("generate one highly targeted, challenging mock interview question") || 
+                              usr.includes("generate the next mock interview question");
+
+  if (isInterviewQuestion) {
+    // Extract parameters
+    const jobRoleMatch = payload.system.match(/- Target Job Role:\s*([^\r\n]+)/i);
+    const jobRole = jobRoleMatch ? jobRoleMatch[1].trim() : "Software Engineer";
+
+    const companyMatch = payload.system.match(/- Target Job Role:\s*[^\r\n]+?\s*at company:\s*([^\r\n]+)/i) || 
+                         payload.system.match(/at company:\s*([^\r\n]+)/i);
+    const company = companyMatch ? companyMatch[1].trim() : "";
+
+    const interviewTypeMatch = payload.system.match(/- Interview Type:\s*([^\r\n]+)/i);
+    const interviewType = interviewTypeMatch ? interviewTypeMatch[1].trim().toLowerCase() : "technical";
+
+    // Extract previous questions count from system or user instructions
+    const prevMatches = (payload.system + payload.user).match(/Q\d+:/gi) || [];
+    const questionIndex = prevMatches.length;
+
+    const questionMap: Record<string, string[]> = {
+      hr: [
+        "Tell me about yourself and why you are interested in the ${jobRole} role${companyStr}.",
+        "What are your greatest professional strengths and weaknesses, and how do you work to improve on your weaknesses?",
+        "Describe a work environment where you feel most productive and happy. What values are most important to you in a team culture?",
+        "How do you handle stress, tight deadlines, or high-pressure situations in your daily work?",
+        "Where do you see yourself professionally in five years, and how does this position help you achieve those career goals?",
+        "Why are you looking to leave your current role, and what specifically attracted you to our company?"
+      ],
+      behavioral: [
+        "Describe a time when you, as a ${jobRole}, had a conflict with a coworker or stakeholder. How did you handle it, and what was the resolution?",
+        "Tell me about a time you made a significant mistake or failed at a project. How did you handle the failure and what did you learn?",
+        "Describe a situation where you had to work under tight constraints or with limited information. How did you make decisions?",
+        "Give me an example of a time when you went above and beyond your standard job duties to deliver a critical project.",
+        "Describe a time you had to deliver difficult or constructive feedback to a peer or manager. What was your approach?",
+        "Tell me about a time you had to convince others to adopt your idea or approach when they initially disagreed."
+      ],
+      technical: [
+        "Can you explain the difference between relational (SQL) and non-relational (NoSQL) databases? In what scenarios would you choose one over the other for a project?",
+        "Explain the concept of microservices vs monolithic architecture. What are the key operational tradeoffs and complexities involved?",
+        "How do you approach testing, code quality, and continuous integration (CI/CD) in your development workflow?",
+        "What are the common strategies for optimizing web application performance and reducing page load times?",
+        "Explain how REST APIs differ from GraphQL. What are the pros and cons of each from a client and server perspective?",
+        "What security best practices do you follow when building and deploying web applications to prevent common vulnerabilities like XSS, CSRF, or SQL injection?"
+      ],
+      leadership: [
+        "How do you approach mentoring junior team members or helping colleagues grow technically while meeting product deadlines?",
+        "Describe a time you had to align multiple stakeholders or engineering teams with competing priorities around a single technical vision.",
+        "How do you handle technical debt? Describe a time you successfully convinced management to invest in refactoring code or upgrading infrastructure.",
+        "Tell me about a time you had to make a high-stakes architectural decision. How did you evaluate the options and build alignment?",
+        "How do you foster an environment of psychological safety and high performance within a technical team?",
+        "Describe a situation where you had to manage an underperforming team member or handle a team alignment issue."
+      ],
+      managerial: [
+        "How do you prioritize backlog items and plan sprint capacity for a complex, cross-functional engineering project?",
+        "Describe your approach to hiring, recruiting, and onboarding new engineers to build a cohesive team.",
+        "How do you handle situations where a critical project is running behind schedule and stakeholders are demanding immediate updates?",
+        "How do you balance product feature delivery with long-term engineering health, security, and scalability requirements?",
+        "Describe a time you had to restructure a team's processes or workflow to improve efficiency and delivery times.",
+        "How do you manage performance reviews, career growth tracks, and compensation reviews for your direct reports?"
+      ],
+      system_design: [
+        "Design a highly available and scalable URL shortener service (like bit.ly) that can handle 10,000 write requests per second.",
+        "Design a rate limiter for a public API gateway. Explain the algorithm you would choose and how to scale it globally.",
+        "Design a real-time notification service that sends millions of push notifications, emails, and SMS alerts daily.",
+        "Design a chat application like WhatsApp/Slack, focusing on low latency, message delivery guarantees, and offline support.",
+        "Design a content distribution and video streaming network like YouTube or Netflix, explaining how files are transcoded, stored, and cached.",
+        "Design a distributed web crawler that collects data from the internet at scale. Detail how you handle duplicate detection, scheduling, and politeness policies."
+      ],
+      coding: [
+        "Write a function in your preferred language to find the longest substring without repeating characters. What is the time and space complexity?\n\nInput: s = \"abcabcbb\"\nOutput: 3\nExplanation: The answer is \"abc\", with the length of 3.",
+        "Design and implement a Least Recently Used (LRU) Cache data structure supporting get(key) and put(key, value) operations in O(1) time complexity.",
+        "Given an array of integers representing stock prices where prices[i] is the price on day i, find the maximum profit you can make by buying and selling at most twice.",
+        "Given a binary tree, find the maximum path sum. The path may start and end at any node in the tree. Explain your depth-first search approach.",
+        "Given an input string (s) and a pattern (p), implement regular expression matching with support for '.' and '*' where '.' matches any single character and '*' matches zero or more of the preceding element.",
+        "Given an array of intervals where intervals[i] = [start_i, end_i], merge all overlapping intervals and return an array of the non-overlapping intervals."
+      ],
+      case_study: [
+        "A high-traffic e-commerce database is experiencing CPU spikes of 100% every day at 12:00 PM, causing user checkout failures. Explain how you would diagnose, triage, and resolve this incident.",
+        "We need to migrate our core customer database (150 million records) to a new cloud-native database with zero downtime and no data loss. Walk me through your migration strategy.",
+        "Our user acquisition team reports a 15% drop in sign-ups since we launched our new multi-factor authentication flow. How would you analyze the customer funnel and recommend solutions?",
+        "An open-source library used across 40 of our microservices has been found to have a critical security vulnerability. How do you coordinate the hotfix deployment with minimal disruption?",
+        "Our SaaS product's AWS hosting costs have doubled over the last quarter without a proportional increase in traffic. How would you perform a cost audit and optimize resources?",
+        "A critical microservice is experiencing intermittent memory leaks, causing crashes every 48 hours. Describe your debugging workflow and tools you would use."
+      ],
+      group_discussion: [
+        "Should early-stage startups build using monolithic architectures first, or should they go straight to microservices? Discuss the tradeoffs of each approach.",
+        "What are the ethical implications and technical risks of integrating generative AI capabilities directly into automated customer support agents?",
+        "How should a software company balance the competing demands of shipping new features rapidly vs investing in testing, security, and refactoring?",
+        "Is it better for a development team to adopt a strict Scrum methodology, or does Kanban offer better flexibility for modern software delivery?",
+        "With the rise of remote work, what are the best practices for maintaining high alignment, collaboration, and strong engineering culture across distributed teams?",
+        "Should software developers be held legally or professionally liable for critical failures in their code (e.g., security breaches or safety-critical software bugs)?"
+      ]
+    };
+
+    const typeKey = Object.keys(questionMap).includes(interviewType) ? interviewType : "technical";
+    const questions = questionMap[typeKey];
+    const rawQuestion = questions[questionIndex % questions.length];
+
+    const companyStr = company ? ` at ${company}` : "";
+    return rawQuestion
+      .replace(/\${jobRole}/g, jobRole)
+      .replace(/\${companyStr}/g, companyStr);
+  }
 
   // 1. Skills Suggestion
   if (sys.includes("skills suggestions") || sys.includes("suggest role-specific skills") || usr.includes("suggest role-specific skills")) {
@@ -349,26 +455,100 @@ function getMockAIContent(payload: PromptPayload): string {
     });
   }
 
-  // 6. Answer Evaluation
+  // 6. Answer Evaluation — heuristic-based scoring from user answer quality
   if (sys.includes("interview evaluation coach") || sys.includes("starevaluation") || usr.includes("evaluate the answer")) {
+    // Extract the user's answer from the prompt
+    const answerMatch = payload.user.match(/Candidate's Answer:\s*"([\s\S]*)"/i);
+    const answer = answerMatch ? answerMatch[1].trim() : "";
+    const answerLen = answer.length;
+    const answerLower = answer.toLowerCase();
+    const wordCount = answer.split(/\s+/).filter(Boolean).length;
+
+    // --- Scoring heuristics ---
+    // 1. Length score: short answers score low, medium length is good, very long may plateau
+    let lengthScore = 0;
+    if (wordCount < 10) lengthScore = 15;
+    else if (wordCount < 25) lengthScore = 30;
+    else if (wordCount < 50) lengthScore = 50;
+    else if (wordCount < 100) lengthScore = 70;
+    else if (wordCount < 200) lengthScore = 85;
+    else if (wordCount < 400) lengthScore = 95;
+    else lengthScore = 90; // diminishing returns for very long
+
+    // 2. STAR method presence
+    const hasSituation = /situation|context|background|scenario|when i|at my|in my role|faced|encountered/i.test(answer);
+    const hasTask = /task|goal|objective|challenge|responsible|assigned|needed to|had to/i.test(answer);
+    const hasAction = /action|implemented|developed|built|created|designed|led|organized|initiated|spearheaded|optimized/i.test(answer);
+    const hasResult = /result|outcome|achieved|increased|decreased|reduced|improved|saved|delivered|impact|revenue|growth|\d+%/i.test(answer);
+    const starCount = [hasSituation, hasTask, hasAction, hasResult].filter(Boolean).length;
+    const starBonus = starCount * 8; // 0–32 bonus points
+
+    // 3. Quantifiable metrics
+    const metricsMatches = answer.match(/\d+(\.\d+)?(%|k\b|m\b| percent| million| thousand| users| hours| days| weeks| months| reduction| increase| improvement)/gi) || [];
+    const metricsBonus = Math.min(metricsMatches.length * 6, 20);
+
+    // 4. Technical keywords
+    const techKeywords = ["api", "database", "architecture", "framework", "deployment", "pipeline", "testing", "scalab", "performance", "security", "cloud", "microservice", "algorithm", "optimization", "integration", "ci/cd", "docker", "kubernetes", "react", "node", "python", "sql", "aws", "gcp", "azure"];
+    const techCount = techKeywords.filter(kw => answerLower.includes(kw)).length;
+    const techBonus = Math.min(techCount * 5, 20);
+
+    // 5. Specificity: proper nouns, named tools, concrete details
+    const specificityKeywords = ["team", "stakeholder", "client", "manager", "sprint", "agile", "deadline", "budget", "cross-functional", "collaboration"];
+    const specCount = specificityKeywords.filter(kw => answerLower.includes(kw)).length;
+    const specBonus = Math.min(specCount * 4, 16);
+
+    // Calculate composite scores (capped at 100)
+    const rawOverall = Math.min(100, Math.max(5, Math.round(lengthScore * 0.4 + starBonus * 0.8 + metricsBonus + techBonus * 0.5 + specBonus * 0.5)));
+    const clarityBase = wordCount > 20 ? Math.min(100, lengthScore + 10) : Math.max(10, lengthScore - 10);
+    const confidenceBase = Math.min(100, Math.max(10, Math.round(lengthScore * 0.5 + specBonus + starBonus * 0.4)));
+    const relevanceBase = Math.min(100, Math.max(10, Math.round(lengthScore * 0.3 + techBonus + specBonus + starBonus * 0.5)));
+    const technicalBase = Math.min(100, Math.max(5, Math.round(techBonus * 2.5 + metricsBonus + lengthScore * 0.2)));
+
+    const overallScore = rawOverall;
+    const clarityScore = clarityBase;
+    const confidenceScore = confidenceBase;
+    const relevanceScore = relevanceBase;
+    const technicalScore = technicalBase;
+
+    // Build dynamic feedback
+    const strengthsList: string[] = [];
+    const weaknessesList: string[] = [];
+    const missedPoints: string[] = [];
+
+    if (hasSituation) strengthsList.push("Provides clear context/situation");
+    if (hasAction) strengthsList.push("Describes concrete actions taken");
+    if (hasResult) strengthsList.push("Includes measurable outcomes");
+    if (techCount > 2) strengthsList.push("Strong technical vocabulary");
+    if (metricsMatches.length > 0) strengthsList.push("Uses quantifiable metrics effectively");
+
+    if (!hasSituation) { weaknessesList.push("Missing clear situational context"); missedPoints.push("Background context describing the initial situation"); }
+    if (!hasTask) { weaknessesList.push("No clear task or objective stated"); missedPoints.push("Explicit definition of the goal or task assigned"); }
+    if (!hasAction) { weaknessesList.push("Lacks specific actions you personally took"); missedPoints.push("Personal actions and steps taken to address the challenge"); }
+    if (!hasResult) { weaknessesList.push("No quantifiable results or outcomes"); missedPoints.push("Quantifiable metrics showing the impact (e.g., %, $, time saved)"); }
+    if (wordCount < 30) { weaknessesList.push("Answer is too brief to demonstrate depth"); missedPoints.push("More detailed explanation of the approach and methodology"); }
+
     return JSON.stringify({
-      overallScore: 82,
-      clarityScore: 85,
-      confidenceScore: 80,
-      relevanceScore: 88,
-      technicalScore: 78,
+      overallScore,
+      clarityScore,
+      confidenceScore,
+      relevanceScore,
+      technicalScore,
       starEvaluation: {
-        situation: "Clearly describes the software migration project and challenges faced.",
-        task: "Identifies the core goal of minimizing downtime and ensuring data integrity.",
-        action: "Detailing database refactoring and caching layer implementation.",
-        result: "Mentions completion, but lacks strong quantifiable metrics showing actual business results."
+        situation: hasSituation ? "Good — provides context about the situation or background." : "Missing — no clear situational context was provided. Start by describing where/when this happened.",
+        task: hasTask ? "Good — identifies the goal, challenge, or responsibility." : "Missing — the specific task or objective is not clearly stated.",
+        action: hasAction ? "Good — describes concrete actions and steps taken." : "Missing — needs specific details about what YOU personally did.",
+        result: hasResult ? "Good — includes measurable outcomes or impact." : "Missing — add quantifiable results (e.g., percentages, dollar amounts, time savings)."
       },
-      generalFeedback: "The answer is well-structured and relevant, but can be improved by adding explicit metrics to the outcome of your actions.",
-      strengths: "Good communication clarity, detailed explanation of structural architecture steps.",
-      weaknesses: "Lacks specific data on response latency reduction or percentage of system uptime preserved.",
-      missedPoints: ["Explicit database performance numbers", "Coordinating rollout phases with other dev squads"],
-      suggestedImprovement: "Quantify your achievements using numbers (e.g., 'reduced query time by 40% and saved 12 engineering hours per week').",
-      betterAnswer: "In my previous role, I was tasked with migrating a database holding 5M user records. I designed a staging pipeline, implemented Redis caching, and conducted migrations with zero downtime. This successfully reduced query latency by 45% and improved checkout throughput by 20%."
+      generalFeedback: overallScore >= 75
+        ? "Solid answer with good structure. To score higher, ensure every answer follows the complete STAR framework with specific, quantifiable results."
+        : overallScore >= 45
+        ? "Decent foundation, but the answer needs more depth. Add specific examples, metrics, and a clearer structure using the STAR method."
+        : "The answer is too brief or lacks substance. Expand significantly with concrete examples, specific actions you took, and measurable outcomes.",
+      strengths: strengthsList.length > 0 ? strengthsList.join(". ") + "." : "The answer shows effort, but needs more structure and specifics.",
+      weaknesses: weaknessesList.length > 0 ? weaknessesList.join(". ") + "." : "No major structural weaknesses detected.",
+      missedPoints,
+      suggestedImprovement: "Structure your answer using the STAR method: describe the Situation, define the Task, detail your specific Actions, and quantify the Results with metrics.",
+      betterAnswer: `In my previous role, I identified [specific situation/challenge]. I was tasked with [clear objective]. I personally [specific actions: designed, implemented, led] using [technologies/methodologies]. As a result, we achieved [quantifiable outcome, e.g., 30% improvement, $50K savings, 2x faster delivery], which directly impacted [business metric].`
     });
   }
 
@@ -431,6 +611,43 @@ function getMockAIContent(payload: PromptPayload): string {
     return "Results-driven professional with extensive expertise in software development, cloud systems, and project leadership. Demonstrated track record of optimizing system architectures, leading cross-functional teams, and implementing scalable solutions that drive efficiency and revenue. Passionate about leveraging cutting-edge technologies to solve complex business challenges.";
   }
 
-  // Default fallback text
-  return "Results-driven professional experienced in developing scalable architectures, optimizing query latency, and spearheading software engineering solutions.";
+  // Default fallback text for general chat or unhandled prompts
+  let userQuery = payload.user;
+  const boilerplateIndex = userQuery.indexOf("instructions:\n");
+  if (boilerplateIndex !== -1) {
+    userQuery = userQuery.substring(boilerplateIndex + 14).trim();
+  } else {
+    const backupIndex = userQuery.indexOf("instructions:");
+    if (backupIndex !== -1) {
+      userQuery = userQuery.substring(backupIndex + 13).trim();
+    }
+  }
+
+  const queryLower = userQuery.toLowerCase();
+
+  if (queryLower.includes("profession") || queryLower.includes("career") || queryLower.includes("job") || queryLower.includes("rate") || queryLower.includes("demand")) {
+    return "Based on current job market analysis, the highest-rated and most in-demand professions include:\n1. AI/Machine Learning Engineer (+75% YoY demand growth)\n2. Cloud & DevOps Architect (focusing on AWS/Kubernetes)\n3. Cybersecurity Specialist\n4. Full Stack Developer (React/Node/Next.js)\n5. Product Manager (Technical focus)";
+  }
+
+  if (queryLower.includes("hello") || queryLower.includes("hi") || queryLower.includes("hey") || queryLower.includes("greet")) {
+    return "Hello! I am your AI career writer assistant. How can I help you improve your resume, write bullet points, optimize your summary, or search for jobs today?";
+  }
+
+  if (queryLower.includes("template") || queryLower.includes("design") || queryLower.includes("layout") || queryLower.includes("format")) {
+    return "We recommend using clean, single-column templates for maximum ATS compatibility. Focus on standard headings (Experience, Education, Skills) and ensure your layout is uncluttered and readable.";
+  }
+
+  if (queryLower.includes("interview") || queryLower.includes("question") || queryLower.includes("practice")) {
+    return "For technical interviews, practice behavioral answers using the STAR format (Situation, Task, Action, Result). Focus on resolving engineering tradeoffs, team collaboration, and clear system design concepts.";
+  }
+
+  if (queryLower.includes("skills") || queryLower.includes("technologies") || queryLower.includes("tools")) {
+    return "Be sure to categorize your skills into clear groups like Languages, Frameworks, Databases, and Tools. Tailor your skills section to match key requirements in the target job description.";
+  }
+
+  if (queryLower.includes("resume") || queryLower.includes("bullet") || queryLower.includes("experience") || queryLower.includes("write")) {
+    return "To write high-impact experience bullets, use the STAR method: Action Verb + Task + Action Taken + Quantifiable Outcome. For example: 'Spearheaded frontend migration to Next.js, improving page speed by 40% and user retention by 15%.'";
+  }
+
+  return `I've analyzed your prompt regarding: "${userQuery}". Here is a professional recommendation:\n\nTo optimize this area, describe your achievements using active verbs, focus on metrics (e.g. speed, cost, scale), and relate your accomplishments directly to technical business outcomes.`;
 }

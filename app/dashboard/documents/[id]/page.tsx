@@ -533,7 +533,8 @@ export default function DocumentEditorWorkspace({ params }: PageProps) {
   }
 
   return (
-    <div className="h-[calc(100vh-5rem)] flex flex-col space-y-4">
+    <>
+      <div className="h-[calc(100vh-5rem)] flex flex-col space-y-4 print:hidden">
       {/* 1. Header controls */}
       <div className="flex items-center justify-between border-b dark:border-zinc-800 pb-3">
         <div className="flex items-center gap-2">
@@ -1013,5 +1014,17 @@ export default function DocumentEditorWorkspace({ params }: PageProps) {
         </DialogFooter>
       </Dialog>
     </div>
+
+    {/* Print-only layout container */}
+    <div className="hidden print:block text-left p-8 bg-white text-zinc-950 font-serif leading-relaxed text-sm whitespace-pre-wrap">
+      <div className="border-b-2 border-zinc-900 pb-4 mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{title}</h1>
+        <p className="text-xs text-zinc-400 mt-1">
+          Generated via ResumeAI Pro • Candidate Career Document
+        </p>
+      </div>
+      <div className="whitespace-pre-wrap">{content}</div>
+    </div>
+    </>
   );
 }

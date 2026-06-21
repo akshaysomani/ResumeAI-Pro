@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import type { UserProfile } from "@/types";
+import { getUserProfile } from "@/app/actions/profileActions";
 
 interface AuthContextType {
   user: User | null;
@@ -22,15 +23,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
+      const data = await getUserProfile(userId);
 
-      if (error) {
+      if (!data) {
         // Safe check for missing profile row during setup
-        console.warn("Could not fetch profile, setting placeholder details:", error.message);
+        console.warn("Could not fetch profile, setting placeholder details");
         setProfile({
           id: userId,
           email: user?.email || "",
@@ -39,32 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Map snake_case database response to camelCase JS properties
-      if (data) {
-        setProfile({
-          id: data.id,
-          email: data.email || user?.email || "",
-          fullName: data.full_name || "",
-          avatarUrl: data.avatar_url || "",
-          headline: data.headline || "",
-          summary: data.summary || "",
-          website: data.website || "",
-          github: data.github_url || "",
-          linkedin: data.linkedin_url || "",
-          portfolio: data.portfolio_url || "",
-          phoneNumber: data.phone_number || "",
-          location: data.location || "",
-          dob: data.dob || "",
-          gender: data.gender || "",
-          country: data.country || "",
-          twitterUrl: data.twitter_url || "",
-          personalWebsite: data.personal_website || "",
-          preferredLanguage: data.preferred_language || "",
-          timezone: data.timezone || "",
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-        });
-      }
+      setProfile(data);
     } catch (err) {
       console.error("Error fetching profile details:", err);
     }

@@ -199,21 +199,37 @@ export default function ProfilePage() {
             return;
           }
 
-          const fileName = `${user.id}/${Date.now()}.jpg`;
+          let finalAvatarUrl = "";
+          try {
+            const fileName = `${user.id}/${Date.now()}.jpg`;
 
-          // Upload to avatars bucket
-          const { data, error: uploadError } = await supabase.storage
-            .from("avatars")
-            .upload(fileName, blob, { contentType: "image/jpeg", cacheControl: "3600", upsert: true });
+            // Upload to avatars bucket
+            const { data, error: uploadError } = await supabase.storage
+              .from("avatars")
+              .upload(fileName, blob, { contentType: "image/jpeg", cacheControl: "3600", upsert: true });
 
-          if (uploadError) throw uploadError;
+            if (uploadError) {
+              throw uploadError;
+            }
 
-          // Fetch public link from Supabase
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from("avatars").getPublicUrl(fileName);
+            // Fetch public link from Supabase
+            const {
+              data: { publicUrl },
+            } = supabase.storage.from("avatars").getPublicUrl(fileName);
 
-          setAvatarUrl(publicUrl);
+            finalAvatarUrl = publicUrl;
+          } catch (storageErr) {
+            console.warn("Supabase Storage upload failed, falling back to base64 encoding:", storageErr);
+            // Convert blob to base64 Data URL
+            const base64Data = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            finalAvatarUrl = base64Data;
+          }
+
+          setAvatarUrl(finalAvatarUrl);
 
           // Update profiles database row using Server Action
           await updateUserProfile(user.id, {
@@ -225,7 +241,7 @@ export default function ProfilePage() {
             linkedin: linkedin,
             github: github,
             portfolio: portfolio,
-            avatarUrl: publicUrl,
+            avatarUrl: finalAvatarUrl,
             dob,
             gender,
             country,
@@ -253,10 +269,14 @@ export default function ProfilePage() {
     setUploading(true);
 
     try {
-      const urlParts = avatarUrl.split("/public/avatars/");
-      if (urlParts.length === 2) {
-        const filePath = urlParts[1];
-        await supabase.storage.from("avatars").remove([filePath]);
+      if (avatarUrl.startsWith("http")) {
+        const urlParts = avatarUrl.split("/public/avatars/");
+        if (urlParts.length === 2) {
+          const filePath = urlParts[1];
+          await supabase.storage.from("avatars").remove([filePath]).catch(() => {
+            // Ignore storage deletion errors for safety
+          });
+        }
       }
 
       setAvatarUrl("");
@@ -282,7 +302,7 @@ export default function ProfilePage() {
       await refreshProfile();
       success("Profile photo deleted.");
     } catch (err: any) {
-      error("Failed to delete photo.");
+      error(err.message || "Failed to delete photo.");
     } finally {
       setUploading(false);
     }

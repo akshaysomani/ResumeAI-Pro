@@ -954,10 +954,10 @@ export default function ResumeEditorPage() {
   const personal = currentResume.sections.find((s) => s.sectionType === "personal")?.content || {};
 
   return (
-    <div className="flex h-[calc(100vh-8.5rem)] min-h-0 relative select-none" style={{ marginLeft: "-1.5rem", marginRight: "-1.5rem", marginTop: "-1.5rem" }}>
+    <div className="flex h-[calc(100vh-8.5rem)] min-h-0 relative select-none editor-workspace-container" style={{ marginLeft: "-1.5rem", marginRight: "-1.5rem", marginTop: "-1.5rem" }}>
       
       {/* LEFT PANEL: OUTLINE NAVIGATION & DRAG REORDER */}
-      <div className="flex flex-col bg-zinc-50 dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800 h-full overflow-y-auto shrink-0 select-none" style={{ width: `${leftWidth}px` }}>
+      <div className="flex flex-col bg-zinc-50 dark:bg-zinc-950/60 border-r border-zinc-200 dark:border-zinc-800 h-full overflow-y-auto shrink-0 select-none print:hidden" style={{ width: `${leftWidth}px` }}>
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-850 flex items-center justify-between">
           <span className="text-xs font-extrabold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Outline Nav</span>
           <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold">
@@ -1083,12 +1083,12 @@ export default function ResumeEditorPage() {
 
       {/* DRAGDIVIDER LEFT */}
       <div
-        className="w-1 cursor-col-resize hover:bg-indigo-500 bg-transparent transition-colors h-full select-none"
+        className="w-1 cursor-col-resize hover:bg-indigo-500 bg-transparent transition-colors h-full select-none print:hidden"
         onMouseDown={startResizeLeft}
       />
 
       {/* CENTER PANEL: EDITING FORMS WORKSPACE */}
-      <div className="flex-1 bg-white dark:bg-zinc-950 p-6 overflow-y-auto h-full text-left relative">
+      <div className="flex-1 bg-white dark:bg-zinc-950 p-6 overflow-y-auto h-full text-left relative print:hidden">
         {isReadOnly && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
             <div className="bg-zinc-900 border border-red-500/20 p-5 rounded-xl text-center space-y-3 max-w-xs shadow-xl">
@@ -1807,7 +1807,237 @@ export default function ResumeEditorPage() {
           </div>
         )}
 
-        {/* 12. STYLE & THEME CUSTOMIZATION FORM */}
+        {/* 12. VOLUNTEER EXPERIENCE FORM */}
+        {activeSection === "volunteer_experience" && (
+          <div className="space-y-6">
+            {Array.isArray(activeContent) && activeContent.map((item: any, idx: number) => (
+              <div key={item.id || idx} className="p-4 bg-zinc-50/60 dark:bg-zinc-900/20 border dark:border-zinc-800 rounded-xl space-y-3 relative">
+                <button
+                  type="button"
+                  onClick={() => removeListItem(idx)}
+                  className="absolute right-2 top-2 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="space-y-2">
+                  <Input
+                    value={item.role || ""}
+                    onChange={(e) => handleItemChange(idx, "role", e.target.value)}
+                    placeholder="Community Volunteer Lead"
+                  />
+                  <Input
+                    value={item.organization || ""}
+                    onChange={(e) => handleItemChange(idx, "organization", e.target.value)}
+                    placeholder="Red Cross / Habitat for Humanity"
+                  />
+                  <Input
+                    value={item.duration || ""}
+                    onChange={(e) => handleItemChange(idx, "duration", e.target.value)}
+                    placeholder="Jan 2022 - Present"
+                  />
+                  <Textarea
+                    value={item.description || ""}
+                    onChange={(e) => handleItemChange(idx, "description", e.target.value)}
+                    placeholder="Describe your volunteer responsibilities and impact..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-xs py-2.5 font-bold"
+              onClick={() => addListItem({ role: "", organization: "", duration: "", description: "" })}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Add Volunteer Experience
+            </Button>
+          </div>
+        )}
+
+        {/* 13. INTERESTS FORM */}
+        {activeSection === "interests" && (
+          <div className="space-y-6">
+            {Array.isArray(activeContent) && activeContent.map((item: any, idx: number) => (
+              <div key={item.id || idx} className="p-4 bg-zinc-50/60 dark:bg-zinc-900/20 border dark:border-zinc-800 rounded-xl space-y-3 relative flex items-center gap-3">
+                <div className="flex-1">
+                  <Input
+                    value={item.name || ""}
+                    onChange={(e) => handleItemChange(idx, "name", e.target.value)}
+                    placeholder="e.g. Machine Learning, Open Source, Photography"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeListItem(idx)}
+                  className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-xs py-2.5 font-bold"
+              onClick={() => addListItem({ name: "" })}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Add Interest
+            </Button>
+          </div>
+        )}
+
+        {/* 14. PUBLICATIONS FORM */}
+        {activeSection === "publications" && (
+          <div className="space-y-6">
+            {Array.isArray(activeContent) && activeContent.map((item: any, idx: number) => (
+              <div key={item.id || idx} className="p-4 bg-zinc-50/60 dark:bg-zinc-900/20 border dark:border-zinc-800 rounded-xl space-y-3 relative">
+                <button
+                  type="button"
+                  onClick={() => removeListItem(idx)}
+                  className="absolute right-2 top-2 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="space-y-2">
+                  <Input
+                    value={item.title || ""}
+                    onChange={(e) => handleItemChange(idx, "title", e.target.value)}
+                    placeholder="Research Paper / Article Title"
+                  />
+                  <Input
+                    value={item.publisher || ""}
+                    onChange={(e) => handleItemChange(idx, "publisher", e.target.value)}
+                    placeholder="IEEE / ACM / Medium / ArXiv"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={item.date || ""}
+                      onChange={(e) => handleItemChange(idx, "date", e.target.value)}
+                      placeholder="Published Date"
+                    />
+                    <Input
+                      value={item.url || ""}
+                      onChange={(e) => handleItemChange(idx, "url", e.target.value)}
+                      placeholder="https://doi.org/..."
+                    />
+                  </div>
+                  <Textarea
+                    value={item.description || ""}
+                    onChange={(e) => handleItemChange(idx, "description", e.target.value)}
+                    placeholder="Brief description or abstract..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-xs py-2.5 font-bold"
+              onClick={() => addListItem({ title: "", publisher: "", date: "", url: "", description: "" })}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Add Publication
+            </Button>
+          </div>
+        )}
+
+        {/* 15. REFERENCES FORM */}
+        {activeSection === "references" && (
+          <div className="space-y-6">
+            {Array.isArray(activeContent) && activeContent.map((item: any, idx: number) => (
+              <div key={item.id || idx} className="p-4 bg-zinc-50/60 dark:bg-zinc-900/20 border dark:border-zinc-800 rounded-xl space-y-3 relative">
+                <button
+                  type="button"
+                  onClick={() => removeListItem(idx)}
+                  className="absolute right-2 top-2 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="space-y-2">
+                  <Input
+                    value={item.name || ""}
+                    onChange={(e) => handleItemChange(idx, "name", e.target.value)}
+                    placeholder="Reference Name"
+                  />
+                  <Input
+                    value={item.title || ""}
+                    onChange={(e) => handleItemChange(idx, "title", e.target.value)}
+                    placeholder="Title / Position"
+                  />
+                  <Input
+                    value={item.company || ""}
+                    onChange={(e) => handleItemChange(idx, "company", e.target.value)}
+                    placeholder="Company / Organization"
+                  />
+                  <Input
+                    value={item.contact || ""}
+                    onChange={(e) => handleItemChange(idx, "contact", e.target.value)}
+                    placeholder="Email or Phone"
+                  />
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-xs py-2.5 font-bold"
+              onClick={() => addListItem({ name: "", title: "", company: "", contact: "" })}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Add Reference
+            </Button>
+          </div>
+        )}
+
+        {/* 16. AWARDS FORM */}
+        {activeSection === "awards" && (
+          <div className="space-y-6">
+            {Array.isArray(activeContent) && activeContent.map((item: any, idx: number) => (
+              <div key={item.id || idx} className="p-4 bg-zinc-50/60 dark:bg-zinc-900/20 border dark:border-zinc-800 rounded-xl space-y-3 relative">
+                <button
+                  type="button"
+                  onClick={() => removeListItem(idx)}
+                  className="absolute right-2 top-2 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="space-y-2">
+                  <Input
+                    value={item.title || ""}
+                    onChange={(e) => handleItemChange(idx, "title", e.target.value)}
+                    placeholder="Award Title"
+                  />
+                  <Input
+                    value={item.issuer || ""}
+                    onChange={(e) => handleItemChange(idx, "issuer", e.target.value)}
+                    placeholder="Issuing Organization"
+                  />
+                  <Input
+                    value={item.date || ""}
+                    onChange={(e) => handleItemChange(idx, "date", e.target.value)}
+                    placeholder="Date Received"
+                  />
+                  <Textarea
+                    value={item.description || ""}
+                    onChange={(e) => handleItemChange(idx, "description", e.target.value)}
+                    placeholder="Brief description of the award..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-xs py-2.5 font-bold"
+              onClick={() => addListItem({ title: "", issuer: "", date: "", description: "" })}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Add Award
+            </Button>
+          </div>
+        )}
+
+        {/* 17. STYLE & THEME CUSTOMIZATION FORM */}
         {activeSection === "design" && (
           <div className="space-y-6">
             
@@ -3053,17 +3283,17 @@ export default function ResumeEditorPage() {
 
       {/* DRAGDIVIDER RIGHT */}
       <div
-        className="w-1 cursor-col-resize hover:bg-indigo-500 bg-transparent transition-colors h-full select-none"
+        className="w-1 cursor-col-resize hover:bg-indigo-500 bg-transparent transition-colors h-full select-none print:hidden"
         onMouseDown={startResizeRight}
       />
 
       {/* RIGHT PANEL: LIVE PREVIEW CANVAS */}
       <div
-        className="bg-zinc-100 dark:bg-zinc-900/30 overflow-auto h-full shrink-0 flex flex-col relative"
+        className="bg-zinc-100 dark:bg-zinc-900/30 overflow-auto h-full shrink-0 flex flex-col relative resume-print-wrapper"
         style={{ width: `${rightWidth}px` }}
       >
         {/* Preview Zoom Controls header */}
-        <div className="sticky top-0 bg-zinc-50/90 dark:bg-zinc-950/90 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center justify-between z-10 select-none">
+        <div className="sticky top-0 bg-zinc-50/90 dark:bg-zinc-950/90 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center justify-between z-10 select-none print:hidden">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
             <Maximize className="h-3 w-3" /> Live Render Preview
           </span>

@@ -3,11 +3,16 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { queryResumesAction } from "@/app/actions/resumeActions";
+import {
+  getInterviewHistoryAction,
+  getGoalsAction,
+  getSalaryReportsAction,
+} from "@/app/actions/intelligenceActions";
 import {
   FileText,
   Sparkles,
@@ -40,93 +45,79 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch resumes from Supabase
-        const { data, error } = await supabase
-          .from("resumes")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false })
-          .limit(3);
+        // Fetch resumes from PostgreSQL
+        const data = await queryResumesAction({
+          userId: user.id,
+          limit: 3,
+          sortBy: "updated_at",
+          sortOrder: "desc",
+          filterStatus: "all"
+        });
 
-        if (error) throw error;
         if (data) {
           setResumes(
             data.map((r: any) => ({
               id: r.id,
-              userId: r.user_id,
+              userId: r.userId,
               title: r.title,
               description: r.description,
-              templateId: r.template_id,
-              createdAt: r.created_at,
-              updatedAt: r.updated_at,
-              isPublic: r.is_public,
-              atsScore: r.ats_score || 72,
+              templateId: r.templateId,
+              createdAt: r.createdAt,
+              updatedAt: r.updatedAt,
+              isPublic: r.isPublic,
+              atsScore: r.atsScore || 72,
               sections: [],
               status: (r.status as any) || "draft",
-              isFavorite: r.is_favorite || false,
-              isArchived: r.is_archived || false,
-              colorTheme: r.color_theme || "indigo",
-              fontFamily: r.font_family || "sans",
-              paperSize: r.paper_size || "A4",
-              pageMargin: r.page_margin || "normal",
-              layoutStyle: r.layout_style || "single-column",
-              resumeType: r.resume_type || "custom",
+              isFavorite: r.isFavorite || false,
+              isArchived: r.isArchived || false,
+              colorTheme: r.colorTheme || "indigo",
+              fontFamily: r.fontFamily || "sans",
+              paperSize: r.paperSize || "A4",
+              pageMargin: r.pageMargin || "normal",
+              layoutStyle: r.layoutStyle || "single-column",
+              resumeType: r.resumeType || "custom",
             }))
           );
         }
 
-        // Fetch AI usage details
-        const { count, error: usageError } = await supabase
-          .from("ai_usage")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
-
-        if (!usageError && count !== null) {
-          setCredits({ used: count, limit: 5 });
+        // Fetch AI usage details via API
+        try {
+          const usageRes = await fetch("/api/ai/usage");
+          if (usageRes.ok) {
+            const usageData = await usageRes.json();
+            setCredits({ used: usageData.count, limit: usageData.limit });
+          }
+        } catch (usageErr) {
+          console.warn("Could not fetch AI usage:", usageErr);
         }
 
-        // Fetch Mock Interview statistics
-        const { data: interviewData } = await supabase
-          .from("interview_sessions")
-          .select("overall_score")
-          .eq("user_id", user.id)
-          .eq("status", "completed");
-
+        // Fetch Mock Interview statistics from PostgreSQL
+        const interviewData = await getInterviewHistoryAction(user.id);
         if (interviewData && interviewData.length > 0) {
-          const completed = interviewData.filter((i: any) => i.overall_score !== null);
+          const completed = interviewData.filter((i: any) => i.status === "completed" && i.overallScore !== null);
           if (completed.length > 0) {
-            const avg = Math.round(completed.reduce((acc: number, curr: any) => acc + curr.overall_score, 0) / completed.length);
+            const avg = Math.round(completed.reduce((acc: number, curr: any) => acc + (curr.overallScore || 0), 0) / completed.length);
             setAvgInterviewScore(avg);
           }
         }
 
-        // Fetch Goals details
-        const { data: goalData } = await supabase
-          .from("career_goals")
-          .select("progress, status")
-          .eq("user_id", user.id);
-
+        // Fetch Goals details from PostgreSQL
+        const goalData = await getGoalsAction(user.id);
         if (goalData) {
           const active = goalData.filter((g: any) => g.status === "active");
           setActiveGoalCount(active.length);
           if (active.length > 0) {
-            const avgProg = Math.round(active.reduce((acc: number, curr: any) => acc + curr.progress, 0) / active.length);
+            const avgProg = Math.round(active.reduce((acc: number, curr: any) => acc + (curr.progress || 0), 0) / active.length);
             setAvgGoalProgress(avgProg);
           }
         }
 
-        // Fetch Salary report details
-        const { data: salaryData } = await supabase
-          .from("salary_reports")
-          .select("range_median, role")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
+        // Fetch Salary report details from PostgreSQL
+        const salaryData = await getSalaryReportsAction(user.id);
         if (salaryData && salaryData.length > 0) {
           setLatestSalary({
             role: salaryData[0].role,
-            median: parseFloat(salaryData[0].range_median)
+            median: salaryData[0].rangeMedian || 0
           });
         }
       } catch (err) {

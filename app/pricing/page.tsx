@@ -69,7 +69,7 @@ export default function PricingPage() {
       <section className="py-16 px-6 max-w-7xl mx-auto text-center space-y-4">
         <h1 className="text-3xl md:text-5xl font-black tracking-tight">Flexible Plans Built For Your Career</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
-          Upgrade to Pro to export unlimited documents, unlock template styles, and check ATS scores.
+          Upgrade to Pro to export unlimited documents, unlock template styles, and access advanced AI features.
         </p>
       </section>
 
@@ -99,6 +99,10 @@ export default function PricingPage() {
               <li className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span>5 AI helper content generations per day</span>
+              </li>
+              <li className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>Free & unlimited ATS score calculations</span>
               </li>
             </ul>
           </CardContent>
@@ -142,7 +146,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                 <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0" />
-                <span>Full ATS Job Match Checker</span>
+                <span>Advanced AI resume suggestions & deep audits</span>
               </li>
               <li className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                 <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0" />

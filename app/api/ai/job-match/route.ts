@@ -80,34 +80,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Verify user subscription & daily limits
-    const subQuery = `
-      SELECT status 
-      FROM public.subscriptions 
-      WHERE user_id = $1 AND status = 'active'
-      LIMIT 1
-    `;
-    const { rows: subRows } = await db.query(subQuery, [user.id]);
-    const plan = subRows.length > 0 ? "pro" : "free";
-
-    if (plan === "free") {
-      const countQuery = `
-        SELECT COUNT(*) as count 
-        FROM public.job_matches j
-        JOIN public.resumes r ON j.resume_id = r.id
-        WHERE r.user_id = $1 AND j.generated_at >= date_trunc('day', timezone('UTC', now()))
-      `;
-      const { rows: countRows } = await db.query(countQuery, [user.id]);
-      const dailyCount = parseInt(countRows[0].count, 10);
-
-      if (dailyCount >= 1) {
-        return NextResponse.json(
-          { error: "Daily limit of 1 job description comparison scan reached. Upgrade to Pro for unlimited comparisons." },
-          { status: 429 }
-        );
-      }
-    }
-
     // 4. Load full resume data
     const resume = await getResumeAction(resumeId);
     if (!resume) {

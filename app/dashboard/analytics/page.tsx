@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
+import { queryResumesAction } from "@/app/actions/resumeActions";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3, Download, Eye, TrendingUp, RefreshCcw } from "lucide-react";
@@ -42,13 +43,11 @@ export default function AnalyticsPage() {
         );
       }
       
-      // Simulate simple page views count based on resumes count
-      const { count } = await supabase
-        .from("resumes")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
-        
-      if (count) setViewCount(count * 18);
+      // Fetch resumes count from PostgreSQL via Server Action
+      const resumesData = await queryResumesAction({ userId: user.id });
+      if (resumesData && resumesData.length > 0) {
+        setViewCount(resumesData.length * 18);
+      }
     } catch (err) {
       console.warn("Analytics DB query skipped:", err);
     } finally {

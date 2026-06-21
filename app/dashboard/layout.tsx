@@ -108,8 +108,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               Skip to main content
             </a>
-            {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-zinc-200/80 bg-white/70 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/70 shrink-0">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 border-r border-zinc-200/80 bg-white/70 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/70 shrink-0 print:hidden">
         {/* Brand */}
         <div className="h-16 flex items-center px-6 border-b border-zinc-200/80 dark:border-zinc-800/80">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
@@ -149,9 +149,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* User Card */}
         <div className="p-4 border-t border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/30">
           <div className="flex items-center gap-3 mb-3">
-            <div className="h-9 w-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
-              {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "U"}
-            </div>
+            {profile?.avatarUrl ? (
+              <div className="h-9 w-9 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0">
+                <img
+                  src={profile.avatarUrl}
+                  alt="User Profile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "U"}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold truncate">
                 {profile?.fullName || "Guest User"}
@@ -236,7 +246,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="h-16 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/70 backdrop-blur-md dark:bg-zinc-950/70 flex items-center justify-between px-6 z-10 sticky top-0">
+        <header className="h-16 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/70 backdrop-blur-md dark:bg-zinc-950/70 flex items-center justify-between px-6 z-10 sticky top-0 print:hidden">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -262,9 +272,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Button>
             <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800" />
             <Link href="/dashboard/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="h-8 w-8 rounded-full bg-indigo-600 text-white font-semibold flex items-center justify-center text-sm">
-                {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "U"}
-              </div>
+              {profile?.avatarUrl ? (
+                <div className="h-8 w-8 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800">
+                  <img
+                    src={profile.avatarUrl}
+                    alt="User Profile"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-indigo-600 text-white font-semibold flex items-center justify-center text-sm">
+                  {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "U"}
+                </div>
+              )}
             </Link>
           </div>
         </header>

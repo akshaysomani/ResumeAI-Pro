@@ -3,7 +3,6 @@
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -121,6 +120,8 @@ export default function InterviewSessionWorkspace({ params }: { params: Promise<
         throw new Error(await response.text());
       }
 
+      const questionId = response.headers.get("X-Question-Id") || "temp-id";
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let questionText = "";
@@ -129,7 +130,7 @@ export default function InterviewSessionWorkspace({ params }: { params: Promise<
       setQuestions((prev) => [
         ...prev,
         {
-          id: "temp-id",
+          id: questionId,
           sessionId,
           questionText: "AI is crafting question...",
           category: session?.interviewType || "general",
@@ -155,7 +156,7 @@ export default function InterviewSessionWorkspace({ params }: { params: Promise<
         });
       }
 
-      // Reload fresh data from database to capture persisted question ID
+      // Reload fresh data from database to capture persisted question details
       const freshData = await getInterviewSessionAction(sessionId, user!.id);
       if (freshData) {
         setQuestions(freshData.questions);

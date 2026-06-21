@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { createInterviewSessionAction, getUserPlan } from "@/app/actions/intelligenceActions";
+import { createInterviewSessionAction, getUserPlan, getInterviewHistoryAction } from "@/app/actions/intelligenceActions";
+import { queryResumesAction } from "@/app/actions/resumeActions";
 import { 
   Video, 
   Calendar, 
@@ -58,48 +58,18 @@ export default function MockInterviewPage() {
         const userPlan = await getUserPlan(user.id);
         setPlan(userPlan);
 
-        // Load previous sessions
-        const { data: sData, error: sErr } = await supabase
-          .from("interview_sessions")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        if (sErr) throw sErr;
-        if (sData) {
-          setSessions(sData.map((s: any) => ({
-            id: s.id,
-            userId: s.user_id,
-            resumeId: s.resume_id,
-            jobRole: s.job_role,
-            targetCompany: s.target_company || "",
-            experienceLevel: s.experience_level,
-            difficulty: s.difficulty,
-            interviewType: s.interview_type,
-            interviewMode: s.interview_mode,
-            duration: s.duration,
-            questionCount: s.question_count,
-            preferredLanguage: s.preferred_language,
-            overallScore: s.overall_score,
-            status: s.status,
-            strengths: s.strengths || [],
-            weaknesses: s.weaknesses || [],
-            suggestedImprovements: s.suggested_improvements || [],
-            createdAt: s.created_at,
-            updatedAt: s.updated_at
-          })));
+        // Load previous sessions via Server Action
+        const sessionsData = await getInterviewHistoryAction(user.id);
+        if (sessionsData) {
+          setSessions(sessionsData);
         }
 
-        // Load resumes for mapping
-        const { data: rData } = await supabase
-          .from("resumes")
-          .select("id, title")
-          .eq("user_id", user.id);
-          
-        if (rData) {
-          setResumes(rData as any);
-          if (rData.length > 0) {
-            setSelectedResumeId(rData[0].id);
+        // Load resumes for mapping via Server Action
+        const resumesData = await queryResumesAction({ userId: user.id });
+        if (resumesData && Array.isArray(resumesData)) {
+          setResumes(resumesData as any);
+          if (resumesData.length > 0) {
+            setSelectedResumeId(resumesData[0].id);
           }
         }
       } catch (err: any) {

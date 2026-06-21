@@ -15,7 +15,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     fullName: data.full_name || "",
     avatarUrl: data.avatar_url || "",
     headline: data.headline || "",
-    summary: data.summary || "",
+    summary: data.bio || "",
     website: data.website || "",
     github: data.github_url || "",
     linkedin: data.linkedin_url || "",
@@ -37,15 +37,15 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 export async function updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<void> {
   const query = `
     INSERT INTO public.profiles (
-      id, full_name, headline, summary, phone_number, location,
+      id, full_name, headline, bio, phone_number, location,
       linkedin_url, github_url, portfolio_url, website, dob, gender,
-      country, twitter_url, personal_website, preferred_language, timezone, updated_at
+      country, twitter_url, personal_website, preferred_language, timezone, avatar_url, updated_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())
     ON CONFLICT (id) DO UPDATE SET
       full_name = EXCLUDED.full_name,
       headline = EXCLUDED.headline,
-      summary = EXCLUDED.summary,
+      bio = EXCLUDED.bio,
       phone_number = EXCLUDED.phone_number,
       location = EXCLUDED.location,
       linkedin_url = EXCLUDED.linkedin_url,
@@ -59,6 +59,7 @@ export async function updateUserProfile(userId: string, data: Partial<UserProfil
       personal_website = EXCLUDED.personal_website,
       preferred_language = EXCLUDED.preferred_language,
       timezone = EXCLUDED.timezone,
+      avatar_url = EXCLUDED.avatar_url,
       updated_at = NOW()
   `;
   const values = [
@@ -79,6 +80,7 @@ export async function updateUserProfile(userId: string, data: Partial<UserProfil
     data.personalWebsite || null,
     data.preferredLanguage || null,
     data.timezone || null,
+    data.avatarUrl || null,
   ];
 
   await db.query(query, values);

@@ -108,9 +108,9 @@ export async function POST(req: NextRequest) {
       const { rows: countRows } = await db.query(countQuery, [user.id]);
       const dailyCount = parseInt(countRows[0].count, 10);
 
-      if (dailyCount >= 3) {
+      if (dailyCount >= 50) {
         return NextResponse.json(
-          { error: "Daily limit of 3 AI career documents reached. Upgrade to Pro for unlimited usage." },
+          { error: "Daily limit of 50 AI career documents reached. Upgrade to Pro for unlimited usage." },
           { status: 429 }
         );
       }

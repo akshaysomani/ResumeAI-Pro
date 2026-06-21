@@ -21,7 +21,8 @@ import {
   updateGoalAction,
   deleteGoalAction,
   getRoadmapsAction,
-  getLearningPlansAction
+  getLearningPlansAction,
+  getSalaryReportsAction
 } from "@/app/actions/intelligenceActions";
 import {
   MessageSquare,
@@ -122,26 +123,9 @@ export default function CareerCoachPage() {
         setGoals(gData);
 
         // Load Salaries
-        const { data: sData } = await supabase
-          .from("salary_reports")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+        const sData = await getSalaryReportsAction(user.id);
         if (sData) {
-          setSalaryReports(sData.map((s: any) => ({
-            id: s.id,
-            userId: s.user_id,
-            role: s.role,
-            experience: s.experience,
-            location: s.location,
-            industry: s.industry,
-            rangeMin: s.range_min ? parseFloat(s.range_min) : undefined,
-            rangeMax: s.range_max ? parseFloat(s.range_max) : undefined,
-            rangeMedian: s.range_median ? parseFloat(s.range_median) : undefined,
-            trendData: s.trend_data || {},
-            negotiationTips: s.negotiation_tips || [],
-            createdAt: s.created_at
-          })));
+          setSalaryReports(sData);
         }
       } catch (err) {
         console.error("Error loading intelligence dashboard data:", err);
@@ -358,26 +342,9 @@ export default function CareerCoachPage() {
       }
 
       // Reload salary logs
-      const { data: sData } = await supabase
-        .from("salary_reports")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      const sData = await getSalaryReportsAction(user.id);
       if (sData) {
-        setSalaryReports(sData.map((s: any) => ({
-          id: s.id,
-          userId: s.user_id,
-          role: s.role,
-          experience: s.experience,
-          location: s.location,
-          industry: s.industry,
-          rangeMin: s.range_min ? parseFloat(s.range_min) : undefined,
-          rangeMax: s.range_max ? parseFloat(s.range_max) : undefined,
-          rangeMedian: s.range_median ? parseFloat(s.range_median) : undefined,
-          trendData: s.trend_data || {},
-          negotiationTips: s.negotiation_tips || [],
-          createdAt: s.created_at
-        })));
+        setSalaryReports(sData);
       }
     } catch (err) {
       console.error(err);

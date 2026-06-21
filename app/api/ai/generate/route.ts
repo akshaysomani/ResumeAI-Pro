@@ -55,9 +55,9 @@ export async function POST(req: NextRequest) {
       const { rows: countRows } = await db.query(countQuery, [user.id]);
       const dailyCount = parseInt(countRows[0].count, 10);
 
-      if (dailyCount >= 5) {
+      if (dailyCount >= 100) {
         return NextResponse.json(
-          { error: "Daily limit of 5 AI generations reached. Upgrade to Pro for unlimited usage." },
+          { error: "Daily limit of 100 AI generations reached. Upgrade to Pro for unlimited usage." },
           { status: 429 }
         );
       }

@@ -10,7 +10,7 @@ export async function createSupabaseServerClient() {
     throw new Error("Supabase environment variables are not configured.");
   }
 
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
+  const client = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -26,4 +26,33 @@ export async function createSupabaseServerClient() {
       },
     },
   });
+
+  // Intercept auth.getUser to support local mock user login session when remote Supabase fails/is unconfigured
+  const originalGetUser = client.auth.getUser.bind(client.auth);
+  client.auth.getUser = async (jwt?: string) => {
+    try {
+      const response = await originalGetUser(jwt);
+      if (response.data?.user) {
+        return response;
+      }
+    } catch (e) {
+      // Ignore remote communication/auth errors
+    }
+
+    try {
+      const mockUserCookie = cookieStore.get("mock_user")?.value;
+      if (mockUserCookie) {
+        const user = JSON.parse(decodeURIComponent(mockUserCookie));
+        if (user && user.id) {
+          return { data: { user }, error: null };
+        }
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+
+    return { data: { user: null }, error: null };
+  };
+
+  return client;
 }

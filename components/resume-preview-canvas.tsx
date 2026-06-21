@@ -139,6 +139,15 @@ export function ResumePreviewCanvas({
   const references = getSection("references")?.content || [];
   const isReferencesVisible = getSection("references")?.content?.isVisible !== false && references.length > 0;
 
+  const volunteer = getSection("volunteer_experience")?.content || [];
+  const isVolunteerVisible = getSection("volunteer_experience")?.content?.isVisible !== false && volunteer.length > 0;
+
+  const publications = getSection("publications")?.content || [];
+  const isPublicationsVisible = getSection("publications")?.content?.isVisible !== false && publications.length > 0;
+
+  const awards = getSection("awards")?.content || [];
+  const isAwardsVisible = getSection("awards")?.content?.isVisible !== false && awards.length > 0;
+
   const custom = getSection("custom_sections")?.content || [];
   const isCustomVisible = getSection("custom_sections")?.content?.isVisible !== false && custom.length > 0;
 
@@ -766,6 +775,124 @@ export function ResumePreviewCanvas({
     );
   };
 
+  const renderVolunteerExperience = () => {
+    return renderListEntries(
+      "Volunteer Experience",
+      <UserCheck className="h-4 w-4" />,
+      volunteer,
+      (item, idx) => (
+        <div className="text-xs space-y-1 text-left break-inside-avoid">
+          <div className="flex justify-between items-start font-semibold">
+            <div>
+              <span className="font-bold text-zinc-800 dark:text-zinc-100">{item.role || "Volunteer Role"}</span>
+              {item.organization && <span className="text-zinc-400 font-medium"> at {item.organization}</span>}
+            </div>
+            <span className="text-zinc-400 shrink-0 text-[11px] font-medium flex items-center gap-1">
+              <Calendar className="h-3 w-3" /> {item.duration}
+            </span>
+          </div>
+          {item.description && (
+            <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed text-[11px] mt-1 opacity-90">
+              {item.description}
+            </p>
+          )}
+        </div>
+      )
+    );
+  };
+
+  const renderInterests = () => {
+    if (!isInterestsVisible) return null;
+    return (
+      <div className="break-inside-avoid text-left">
+        <SectionHeader title="Interests" icon={<Heart className="h-4 w-4" />} />
+        <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+          {interests.map((item: any, idx: number) => (
+            <span key={item.id || idx}>
+              {item.name}
+              {idx < interests.length - 1 && <span className="text-zinc-300 mx-1">•</span>}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPublications = () => {
+    return renderListEntries(
+      "Publications",
+      <BookOpen className="h-4 w-4" />,
+      publications,
+      (item, idx) => (
+        <div className="text-xs space-y-1 text-left break-inside-avoid">
+          <div className="flex justify-between items-start font-semibold">
+            <div>
+              <span className="font-bold text-zinc-800 dark:text-zinc-100">{item.title || "Publication Title"}</span>
+              {item.publisher && <span className="text-zinc-400 font-medium"> - {item.publisher}</span>}
+            </div>
+            <span className="text-zinc-400 shrink-0 text-[11px] font-medium">{item.date}</span>
+          </div>
+          {item.url && (
+            <a href={item.url} target="_blank" rel="noreferrer" className="text-[10px] hover:underline" style={{ color: primaryColor }}>
+              Link to publication
+            </a>
+          )}
+          {item.description && (
+            <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed text-[11px] mt-0.5">
+              {item.description}
+            </p>
+          )}
+        </div>
+      )
+    );
+  };
+
+  const renderReferences = () => {
+    if (!isReferencesVisible) return null;
+    return (
+      <div className="space-y-2 text-left break-inside-avoid">
+        <SectionHeader title="References" icon={<User className="h-4 w-4" />} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {references.map((item: any, idx: number) => (
+            <div key={item.id || idx} className="text-xs space-y-0.5">
+              <p className="font-bold text-zinc-800 dark:text-zinc-100">{item.name}</p>
+              {(item.title || item.company) && (
+                <p className="text-zinc-400 font-medium text-[11px]">
+                  {item.title} {item.company ? `at ${item.company}` : ""}
+                </p>
+              )}
+              {item.contact && <p className="text-zinc-500 dark:text-zinc-400 text-[10px]">{item.contact}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAwards = () => {
+    return renderListEntries(
+      "Awards & Honors",
+      <Award className="h-4 w-4" />,
+      awards,
+      (item, idx) => (
+        <div className="text-xs space-y-1 text-left break-inside-avoid">
+          <div className="flex justify-between items-start font-semibold">
+            <div>
+              <span className="font-bold text-zinc-800 dark:text-zinc-100">{item.title || "Award Title"}</span>
+              {item.issuer && <span className="text-zinc-400 font-medium"> from {item.issuer}</span>}
+            </div>
+            <span className="text-zinc-400 shrink-0 text-[11px] font-medium">{item.date}</span>
+          </div>
+          {item.description && (
+            <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed text-[11px] mt-0.5">
+              {item.description}
+            </p>
+          )}
+        </div>
+      )
+    );
+  };
+
   // Rendering the panels dynamically based on styling layoutStyle
   const renderLayout = () => {
     const isSidebarLayout = mergedConfig.layoutStyle === "two-column" || 
@@ -782,6 +909,9 @@ export function ResumePreviewCanvas({
           {renderProjects()}
           {renderEducation()}
           {renderInternships()}
+          {renderVolunteerExperience()}
+          {renderPublications()}
+          {renderAwards()}
           {renderCustom()}
         </div>
       );
@@ -802,6 +932,8 @@ export function ResumePreviewCanvas({
           {renderCertifications()}
           {renderLanguages()}
           {renderAchievements()}
+          {renderInterests()}
+          {renderReferences()}
         </div>
       );
 
@@ -830,10 +962,15 @@ export function ResumePreviewCanvas({
         {renderProjects()}
         {renderEducation()}
         {renderInternships()}
+        {renderVolunteerExperience()}
         {renderSkills()}
         {renderCertifications()}
         {renderLanguages()}
         {renderAchievements()}
+        {renderPublications()}
+        {renderAwards()}
+        {renderInterests()}
+        {renderReferences()}
         {renderCustom()}
       </div>
     );

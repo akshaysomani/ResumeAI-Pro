@@ -410,7 +410,7 @@ export default function ClientShareView({
 
         {/* The visual resume template render container */}
         <div className="print-area bg-white dark:bg-zinc-950 shadow-md border dark:border-zinc-850 rounded-xl overflow-hidden flex justify-center p-6 sm:p-10">
-          <div className="w-full max-w-[800px]">
+          <div className="w-full max-w-[800px] print:max-w-full">
             {/* Inject ownerPlan to canvas for watermarking toggles */}
             <ResumePreviewCanvas resume={resume} zoom={1} />
           </div>

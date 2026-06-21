@@ -989,7 +989,7 @@ export async function saveCustomSections(resumeId: string, items: Omit<CustomSec
         INSERT INTO public.custom_sections (resume_id, section_title, content, order_index)
         VALUES ($1, $2, $3, $4)
       `;
-      const values = [resumeId, item.sectionTitle, item.content, i];
+      const values = [resumeId, item.sectionTitle, JSON.stringify(item.content), i];
       await client.query(query, values);
     }
     await client.query("COMMIT");
