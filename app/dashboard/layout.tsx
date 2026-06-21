@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
@@ -32,6 +32,9 @@ import {
   FileUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { I18nProvider } from "@/components/i18n-provider";
+import { OfflineSyncProvider } from "@/components/offline-sync-provider";
 
 interface SidebarItem {
   name: string;
@@ -64,6 +67,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js")
+        .then((reg) => console.log("Service Worker registered with scope:", reg.scope))
+        .catch((err) => console.error("Service Worker registration failed:", err));
+    }
+  }, []);
+
   const getPageTitle = () => {
     if (pathname === "/dashboard") return "Overview";
     const item = sidebarItems.find((i) => i.href === pathname);
@@ -85,8 +96,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
-      {/* Desktop Sidebar */}
+    <ErrorBoundary>
+      <I18nProvider>
+        <OfflineSyncProvider>
+          <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
+            <a
+              href="#main-content"
+              className="absolute left-[-9999px] top-auto w-1 h-1 overflow-hidden focus:left-4 focus:top-4 focus:w-auto focus:h-auto focus:overflow-visible focus:z-50 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2.5 focus:rounded-lg focus:font-bold focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Skip to main content
+            </a>
+            {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r border-zinc-200/80 bg-white/70 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/70 shrink-0">
         {/* Brand */}
         <div className="h-16 flex items-center px-6 border-b border-zinc-200/80 dark:border-zinc-800/80">
@@ -248,10 +268,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Children Container */}
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
+        <main id="main-content" className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto" tabIndex={-1}>
           {children}
         </main>
       </div>
     </div>
+        </OfflineSyncProvider>
+      </I18nProvider>
+    </ErrorBoundary>
   );
 }

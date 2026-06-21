@@ -8,11 +8,14 @@ import { getUserSettings, updateUserSettings } from "@/app/actions/profileAction
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sliders, Sun, Moon, Bell, Shield, Languages, Eye, User } from "lucide-react";
+import { useTranslation } from "@/components/i18n-provider";
+import { LANGUAGES } from "@/lib/translations";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const { theme, toggleTheme, setTheme } = useTheme();
   const { success, error } = useToast();
+  const { setLocale } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,7 +38,9 @@ export default function SettingsPage() {
           if (settings.theme === "light" || settings.theme === "dark") {
             setTheme(settings.theme);
           }
-          setPreferredLang(settings.language || "en");
+          const lang = settings.language || "en";
+          setPreferredLang(lang);
+          setLocale(lang);
 
           // Notifications mapping
           const notifs = settings.notifications || {};
@@ -75,6 +80,7 @@ export default function SettingsPage() {
       };
 
       await updateUserSettings(user.id, payload);
+      setLocale(preferredLang);
       success("Workspace preferences updated successfully.");
     } catch (err: any) {
       error(err.message || "Failed to save settings.");
@@ -150,13 +156,17 @@ export default function SettingsPage() {
               <label className="text-[10px] font-bold text-zinc-500 uppercase">Preferred Language</label>
               <select
                 value={preferredLang}
-                onChange={(e) => setPreferredLang(e.target.value)}
+                onChange={(e) => {
+                  setPreferredLang(e.target.value);
+                  setLocale(e.target.value);
+                }}
                 className="w-full h-10 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-950"
               >
-                <option value="en">English (US)</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.name}
+                  </option>
+                ))}
               </select>
             </div>
           </CardContent>

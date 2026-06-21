@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import type { Resume, ResumeSection, SectionType } from "@/types";
 import { getResumeAction, saveResumeFullAction } from "@/app/actions/resumeActions";
+import { saveOfflineDraft, getOfflineDraft, enqueueSyncTransaction } from "@/lib/local-db";
 
 interface ResumeContextType {
   currentResume: Resume | null;
@@ -52,6 +53,17 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
 
   const loadResume = async (id: string) => {
     try {
+      // First try to load from local storage offline drafts to preserve local changes
+      const offlineDraft = getOfflineDraft(id);
+      if (offlineDraft) {
+        setCurrentResume(offlineDraft);
+        setPast([]);
+        setFuture([]);
+        setIsDirty(true);
+        setPreviewTemplateId(null);
+        return;
+      }
+
       const data = await getResumeAction(id);
       if (data) {
         setCurrentResume(data);
@@ -63,7 +75,16 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
         throw new Error("No resume data returned");
       }
     } catch (err) {
-      console.warn("Using default resume workspace state fallback:", err);
+      console.warn("Using default resume workspace state fallback or local cache:", err);
+      const offlineDraft = getOfflineDraft(id);
+      if (offlineDraft) {
+        setCurrentResume(offlineDraft);
+        setPast([]);
+        setFuture([]);
+        setIsDirty(true);
+        setPreviewTemplateId(null);
+        return;
+      }
       // Setup default fallback structure
       const defaultState: Resume = {
         id,
@@ -362,10 +383,19 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
     if (!currentResume) return;
     setSaving(true);
     try {
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        saveOfflineDraft(currentResume.id, currentResume);
+        enqueueSyncTransaction("saveResume", currentResume);
+        setIsDirty(false);
+        return;
+      }
       await saveResumeFullAction(currentResume.id, currentResume);
       setIsDirty(false);
     } catch (err) {
-      console.error("Auto-saving failed:", err);
+      console.error("Auto-saving failed, caching offline:", err);
+      saveOfflineDraft(currentResume.id, currentResume);
+      enqueueSyncTransaction("saveResume", currentResume);
+      setIsDirty(false);
     } finally {
       setSaving(false);
     }
