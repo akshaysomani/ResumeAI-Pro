@@ -159,30 +159,8 @@ export async function getAIStream(
           const chunkText = mockContent.substring(index, index + chunkSize);
           index += chunkSize;
 
-          let line = "";
-          if (provider === "gemini") {
-            line = `data: ${JSON.stringify({
-              candidates: [{ content: { parts: [{ text: chunkText }] } }]
-            })}\n`;
-          } else if (provider === "openai" || provider === "openrouter") {
-            line = `data: ${JSON.stringify({
-              choices: [{ delta: { content: chunkText } }]
-            })}\n`;
-          } else if (provider === "anthropic") {
-            line = `data: ${JSON.stringify({
-              type: "content_block_delta",
-              delta: { text: chunkText }
-            })}\n`;
-          } else {
-            line = `data: ${JSON.stringify({ text: chunkText })}\n`;
-          }
-
-          controller.enqueue(encoder.encode(line));
+          controller.enqueue(encoder.encode(chunkText));
           await new Promise(r => setTimeout(r, 12));
-        }
-
-        if (provider === "openai" || provider === "openrouter") {
-          controller.enqueue(encoder.encode("data: [DONE]\n"));
         }
         
         if (onComplete) {
