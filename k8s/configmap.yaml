@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resumeai-config
+  namespace: default
+data:
+  NEXT_PUBLIC_APP_URL: "https://resumeai-pro.com"
+  NODE_ENV: "production"

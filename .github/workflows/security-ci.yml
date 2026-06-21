@@ -1,0 +1,57 @@
+name: Hardened Security CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  audit-and-test:
+    runs-on: ubuntu-latest
+    
+    env:
+      DATABASE_URL: postgresql://postgres:postgres_secure_pass@localhost:5432/AI_resume_Builder
+      NODE_ENV: test
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_secure_pass
+          POSTGRES_DB: AI_resume_Builder
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Clean Install Dependencies
+      run: npm ci
+
+    - name: Audit Dependencies for Known Vulnerabilities
+      run: npm audit --audit-level=high
+
+    - name: Run Database Migrations
+      run: node scripts/migrate.js
+
+    - name: Run Automated Test Suites
+      run: npm run test
+
+    - name: Validate Next.js Compilation Build
+      run: npm run build
+      env:
+        NEXT_TELEMETRY_DISABLED: 1

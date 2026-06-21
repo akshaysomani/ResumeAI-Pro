@@ -30,6 +30,7 @@ import {
   Zap,
   Code2,
   FileUp,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -58,6 +59,7 @@ const sidebarItems: SidebarItem[] = [
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Privacy Center", href: "/dashboard/privacy", icon: Shield },
   { name: "Profile", href: "/dashboard/profile", icon: User },
 ];
 

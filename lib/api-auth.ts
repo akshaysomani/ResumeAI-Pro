@@ -1,6 +1,4 @@
 import crypto from "crypto";
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "./db";
 
 export interface ApiKeyValidationResult {
   isValid: boolean;
@@ -50,6 +48,7 @@ export async function validateApiKey(key: string): Promise<ApiKeyValidationResul
   const hash = hashApiKey(key);
 
   try {
+    const { db } = await import("./db");
     const query = `
       SELECT id, user_id, scopes, expires_at, is_revoked 
       FROM public.api_keys 
@@ -101,6 +100,7 @@ export async function checkRateLimit(
   limitPerDay: number
 ): Promise<{ allowed: boolean; error?: string }> {
   try {
+    const { db } = await import("./db");
     // 1. Minute Limit
     const minQuery = `
       SELECT COUNT(*) as count 
@@ -160,6 +160,7 @@ export async function logApiUsage(params: {
   userAgent?: string;
 }): Promise<void> {
   try {
+    const { db } = await import("./db");
     const query = `
       INSERT INTO public.api_usage_logs (
         api_key_id, user_id, endpoint, method, status_code, 
@@ -194,10 +195,10 @@ export function signWebhookPayload(payload: string, secret: string): string {
  * Higher-order helper to authenticate API routes, verify scopes, enforce rate limits, and log analytics.
  */
 export async function withApiAuth(
-  req: NextRequest,
+  req: any,
   requiredScope: string,
-  handler: (userId: string, keyId: string) => Promise<NextResponse>
-): Promise<NextResponse> {
+  handler: (userId: string, keyId: string) => Promise<any>
+): Promise<any> {
   const startTime = Date.now();
   const authHeader = req.headers.get("authorization");
   const ipAddress = req.headers.get("x-forwarded-for") || "127.0.0.1";
@@ -207,6 +208,9 @@ export async function withApiAuth(
   let userId: string | undefined;
 
   try {
+    const { NextResponse } = await import("next/server");
+    const { db } = await import("./db");
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       const res = NextResponse.json(
         { error: "Unauthorized: Missing or invalid Authorization header" },
@@ -319,6 +323,7 @@ export async function withApiAuth(
     return response;
   } catch (error: any) {
     console.error("Error in withApiAuth API wrapper:", error);
+    const { NextResponse } = await import("next/server");
     const res = NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     const latency = Date.now() - startTime;
     await logApiUsage({
