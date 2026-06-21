@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
+// @ts-ignore: Node.js native --experimental-strip-types requires explicit .ts extension
 import { getTranslation, formatCurrency, formatDate } from "../lib/translations.ts";
 
 test("Unit Tests - Translations & Formatting", async (t) => {

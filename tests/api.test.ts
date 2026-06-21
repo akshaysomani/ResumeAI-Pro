@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
+// @ts-ignore: Node.js native --experimental-strip-types requires explicit .ts extension
 import { generateKeyAndHash, hashApiKey, signWebhookPayload } from "../lib/api-auth.ts";
 
 test("API Authentication & Rate Limiter Logic", async (t) => {

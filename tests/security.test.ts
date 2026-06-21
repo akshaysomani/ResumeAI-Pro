@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
+// @ts-ignore: Node.js native --experimental-strip-types requires explicit .ts extension
 import nextConfig from "../next.config.ts";
 
 test("Security Architecture Audit - HTTP Headers", async (t) => {
