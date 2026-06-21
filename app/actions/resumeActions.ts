@@ -3,6 +3,15 @@
 import * as dbService from "@/services/dbService";
 import type { Resume, SectionType } from "@/types";
 
+/**
+ * Syncs the authenticated user's profile into the local PostgreSQL database.
+ * Must be called after login so that foreign keys on tables like `resumes`
+ * can reference the user's profile row.
+ */
+export async function syncProfileAction(userId: string, email?: string, fullName?: string): Promise<void> {
+  await dbService.ensureLocalProfile(userId, email, fullName);
+}
+
 export async function createResumeAction(
   userId: string,
   title: string,

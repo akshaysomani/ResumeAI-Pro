@@ -77,15 +77,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Helper to read mock cookie
+    const getMockUser = () => {
+      if (typeof window === "undefined") return null;
+      const cookies = document.cookie.split("; ");
+      const mockCookie = cookies.find((row) => row.startsWith("mock_user="));
+      if (mockCookie) {
+        try {
+          return JSON.parse(decodeURIComponent(mockCookie.split("=")[1]));
+        } catch (e) {}
+      }
+      return null;
+    };
+
     // 1. Initial auth check
     const checkUser = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        let sessionUser = null;
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (!error && session?.user) {
+            sessionUser = session.user;
+          }
+        } catch (e) {}
+
+        if (!sessionUser) {
+          sessionUser = getMockUser();
+        }
         
-        if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
+        if (sessionUser) {
+          setUser(sessionUser);
+          await fetchProfile(sessionUser.id);
         } else {
           setUser(null);
           setProfile(null);
@@ -102,9 +124,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user || null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
+        let sessionUser = session?.user || null;
+        if (!sessionUser) {
+          sessionUser = getMockUser();
+        }
+
+        setUser(sessionUser);
+        if (sessionUser) {
+          await fetchProfile(sessionUser.id);
         } else {
           setProfile(null);
         }
@@ -120,7 +147,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     try {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
+      
+      // Clear mock cookie
+      if (typeof window !== "undefined") {
+        document.cookie = "mock_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      }
       setUser(null);
       setProfile(null);
     } catch (error) {

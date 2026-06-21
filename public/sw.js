@@ -1,6 +1,5 @@
-const CACHE_NAME = "rai-app-cache-v1";
+const CACHE_NAME = "rai-app-cache-v2";
 const STATIC_ASSETS = [
-  "/dashboard",
   "/file.svg",
   "/globe.svg",
   "/next.svg",
@@ -41,7 +40,7 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Bypass database writes, auth, and REST API calls
+  // Bypass database writes, auth, REST API calls, and server actions
   if (
     request.method !== "GET" ||
     url.pathname.startsWith("/api/") ||
@@ -51,12 +50,12 @@ self.addEventListener("fetch", (event) => {
     return; // Let browser process normally via network
   }
 
-  // Caching Strategy: Next.js Static Chunks & SVGs -> Cache First
+  // Cache First: Only for truly static assets (SVGs, PNGs, fonts) — NOT JS/CSS chunks
   if (
-    url.pathname.includes("/_next/static/") ||
     url.pathname.endsWith(".svg") ||
     url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".css")
+    url.pathname.endsWith(".woff2") ||
+    url.pathname.endsWith(".woff")
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
@@ -78,11 +77,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Caching Strategy: HTML Pages & Dynamic Paths -> Network First (with cache fallback)
+  // Network First: All other requests (HTML pages, JS chunks, CSS, dynamic paths)
   event.respondWith(
     fetch(request)
       .then((networkResponse) => {
-        // Cache success page copies dynamically
         if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -92,12 +90,10 @@ self.addEventListener("fetch", (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // Fallback to cache copy on network failure (offline)
         return caches.match(request).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          // If offline and not in cache, fallback to dashboard index shell
           if (request.mode === "navigate") {
             return caches.match("/dashboard");
           }

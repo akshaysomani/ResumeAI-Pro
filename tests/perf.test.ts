@@ -5,6 +5,9 @@ import { db } from "../lib/db.ts";
 
 test("Performance Benchmarks & Database Metrics", async (t) => {
   await t.test("Database Query Response Time Latency Limit", async () => {
+    // Warm up pool connection to exclude connection establishment handshake from query execution latency
+    await db.query("SELECT 1;");
+
     const start = performance.now();
     await db.query("SELECT COUNT(*) FROM public.profiles");
     const end = performance.now();

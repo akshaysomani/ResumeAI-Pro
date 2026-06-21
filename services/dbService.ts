@@ -22,6 +22,22 @@ import type {
 // RESUME CRUD & CORE OPERATIONS
 // ==========================================
 
+/**
+ * Ensures the user has a profile row in the local PostgreSQL database.
+ * Supabase Cloud manages auth.users and may have a profiles table there,
+ * but the local database (via DATABASE_URL) is separate. Tables like
+ * `resumes` have a foreign key `user_id → profiles.id`, so we must
+ * guarantee a local profile row exists before inserting dependent records.
+ */
+export async function ensureLocalProfile(userId: string, email?: string, fullName?: string): Promise<void> {
+  await db.query(
+    `INSERT INTO public.profiles (id, email, full_name, created_at, updated_at)
+     VALUES ($1, $2, $3, now(), now())
+     ON CONFLICT (id) DO NOTHING`,
+    [userId, email || "", fullName || "User Account"]
+  );
+}
+
 export async function createResume(
   userId: string,
   title: string,
@@ -36,6 +52,9 @@ export async function createResume(
     resumeType?: string;
   } = {}
 ): Promise<string> {
+  // Guarantee user profile exists in local DB before FK insert
+  await ensureLocalProfile(userId);
+
   const query = `
     INSERT INTO public.resumes (
       user_id, title, template_id, status, is_favorite, is_archived,
