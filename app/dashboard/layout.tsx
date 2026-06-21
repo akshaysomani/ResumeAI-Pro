@@ -26,6 +26,10 @@ import {
   ChevronRight,
   Video,
   MessageSquare,
+  Plug,
+  Zap,
+  Code2,
+  FileUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +48,10 @@ const sidebarItems: SidebarItem[] = [
   { name: "Job Matcher", href: "/dashboard/job-matcher", icon: Target },
   { name: "Interview Prep", href: "/dashboard/interview", icon: Video },
   { name: "Career Coach", href: "/dashboard/coach", icon: MessageSquare },
+  { name: "Integrations", href: "/dashboard/integrations", icon: Plug },
+  { name: "Automations", href: "/dashboard/automations", icon: Zap },
+  { name: "Developer Portal", href: "/dashboard/developer", icon: Code2 },
+  { name: "Import Resume", href: "/dashboard/import", icon: FileUp },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },

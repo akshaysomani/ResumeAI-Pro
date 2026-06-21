@@ -896,6 +896,139 @@ export interface WorkspaceActivity {
   createdAt: string;
 }
 
+// =============================================
+// MODULE 14: API Platform & Integrations
+// =============================================
 
+export interface ApiKey {
+  id: string;
+  userId: string;
+  name: string;
+  keyPrefix: string;
+  scopes: string[];
+  rateLimitPerMinute: number;
+  rateLimitPerDay: number;
+  expiresAt?: string | null;
+  lastUsedAt?: string | null;
+  requestCount: number;
+  isRevoked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
+export interface OAuthApp {
+  id: string;
+  userId: string;
+  appName: string;
+  description?: string | null;
+  clientId: string;
+  redirectUris: string[];
+  scopes: string[];
+  homepageUrl?: string | null;
+  logoUrl?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OAuthToken {
+  id: string;
+  appId: string;
+  userId: string;
+  scopes: string[];
+  expiresAt: string;
+  revoked: boolean;
+  createdAt: string;
+}
+
+export interface WebhookEndpoint {
+  id: string;
+  userId: string;
+  organizationId?: string | null;
+  url: string;
+  description?: string | null;
+  signingSecret: string;
+  events: string[];
+  isActive: boolean;
+  failureCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookDelivery {
+  id: string;
+  endpointId: string;
+  eventType: string;
+  payload: any;
+  status: "pending" | "delivered" | "failed";
+  responseCode?: number | null;
+  responseBody?: string | null;
+  attemptCount: number;
+  maxAttempts: number;
+  nextRetryAt?: string | null;
+  deliveredAt?: string | null;
+  createdAt: string;
+}
+
+export interface AutomationRule {
+  id: string;
+  userId: string;
+  organizationId?: string | null;
+  name: string;
+  description?: string | null;
+  triggerEvent: string;
+  triggerConditions: any;
+  actionType: string;
+  actionConfig: any;
+  isActive: boolean;
+  executionCount: number;
+  lastExecutedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AutomationExecution {
+  id: string;
+  ruleId: string;
+  triggerData: any;
+  actionResult: any;
+  status: "pending" | "success" | "failed";
+  errorMessage?: string | null;
+  durationMs?: number | null;
+  createdAt: string;
+  ruleName?: string;
+}
+
+export interface IntegrationConfig {
+  id: string;
+  userId: string;
+  provider: string;
+  config: any;
+  isConnected: boolean;
+  lastSyncedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ImportRecord {
+  id: string;
+  userId: string;
+  sourceType: string;
+  sourceName?: string | null;
+  fileSizeBytes?: number | null;
+  status: "pending" | "processing" | "completed" | "failed";
+  resumeId?: string | null;
+  parsedData?: any;
+  errorMessage?: string | null;
+  createdAt: string;
+}
+
+export interface ApiUsageStats {
+  totalRequests: number;
+  totalToday: number;
+  avgLatencyMs: number;
+  errorRate: number;
+  topEndpoints: { endpoint: string; count: number }[];
+  requestsByDay: { date: string; count: number }[];
+}
 
