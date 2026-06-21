@@ -79,6 +79,11 @@ export async function createResume(
 }
 
 export async function getResume(resumeId: string): Promise<Resume | null> {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(resumeId)) {
+    return null;
+  }
+
   const query = `SELECT * FROM public.resumes WHERE id = $1`;
   const { rows } = await db.query(query, [resumeId]);
   if (rows.length === 0) return null;
