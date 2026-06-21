@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import type { Resume, ResumeSection, SectionType } from "@/types";
-import { getResumeAction, saveResumeFullAction } from "@/app/actions/resumeActions";
+import { getResumeAction, saveResumeFullAction, createResumeAction, syncProfileAction } from "@/app/actions/resumeActions";
 import { saveOfflineDraft, getOfflineDraft, enqueueSyncTransaction } from "@/lib/local-db";
+import { useAuth } from "@/components/auth-provider";
 
 interface ResumeContextType {
   currentResume: Resume | null;
@@ -30,6 +31,7 @@ const ResumeContext = createContext<ResumeContextType | undefined>(undefined);
 const MAX_HISTORY_LIMIT = 50;
 
 export function ResumeProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [currentResume, setCurrentResume] = useState<Resume | null>(null);
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -88,7 +90,7 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
       // Setup default fallback structure
       const defaultState: Resume = {
         id,
-        userId: "placeholder-user",
+        userId: user?.id || "placeholder-user",
         title: "Untitled Resume",
         templateId: "modern",
         createdAt: new Date().toISOString(),
@@ -383,13 +385,61 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
     if (!currentResume) return;
     setSaving(true);
     try {
+      let activeResume = currentResume;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isNew = activeResume.id === "editor-workspace" || !uuidRegex.test(activeResume.id);
+
+      // Resolve placeholder user ID if now authenticated
+      if (user && activeResume.userId === "placeholder-user") {
+        activeResume = { ...activeResume, userId: user.id };
+      }
+
       if (typeof window !== "undefined" && !navigator.onLine) {
-        saveOfflineDraft(currentResume.id, currentResume);
-        enqueueSyncTransaction("saveResume", currentResume);
+        saveOfflineDraft(activeResume.id, activeResume);
+        enqueueSyncTransaction("saveResume", activeResume);
+        setCurrentResume(activeResume);
         setIsDirty(false);
         return;
       }
-      await saveResumeFullAction(currentResume.id, currentResume);
+
+      if (isNew) {
+        if (!user) {
+          throw new Error("Cannot save draft to database: user is not authenticated.");
+        }
+
+        // Sync local profile row first
+        await syncProfileAction(user.id, user.email, user.user_metadata?.full_name);
+
+        // Create resume in DB and get new real UUID
+        const newId = await createResumeAction(user.id, activeResume.title, {
+          templateId: activeResume.templateId,
+          colorTheme: activeResume.colorTheme,
+          fontFamily: activeResume.fontFamily,
+          paperSize: activeResume.paperSize,
+          pageMargin: activeResume.pageMargin,
+          layoutStyle: activeResume.layoutStyle,
+          resumeType: activeResume.resumeType,
+        });
+
+        // Map state & child items to use the new UUID
+        activeResume = {
+          ...activeResume,
+          id: newId,
+          userId: user.id,
+          sections: activeResume.sections.map((sec) => ({ ...sec, resumeId: newId })),
+        };
+
+        // Update URL search parameters without reloading
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.set("id", newId);
+          url.searchParams.delete("new");
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
+
+      await saveResumeFullAction(activeResume.id, activeResume);
+      setCurrentResume(activeResume);
       setIsDirty(false);
     } catch (err) {
       console.error("Auto-saving failed, caching offline:", err);

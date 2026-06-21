@@ -112,8 +112,9 @@ export async function getResume(resumeId: string): Promise<Resume | null> {
     themeConfig: row.theme_config,
   };
 }
-
 export async function deleteResume(resumeId: string): Promise<void> {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(resumeId)) return;
   const query = `DELETE FROM public.resumes WHERE id = $1`;
   await db.query(query, [resumeId]);
 }
@@ -122,6 +123,8 @@ export async function updateResumeMetadata(
   resumeId: string,
   data: Partial<Omit<Resume, "id" | "userId" | "sections">>
 ): Promise<void> {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(resumeId)) return;
   const keys = Object.keys(data);
   if (keys.length === 0) return;
 

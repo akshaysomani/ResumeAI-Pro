@@ -185,23 +185,30 @@ export async function getResumeAction(resumeId: string): Promise<Resume | null> 
   return resume;
 }
 
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function deleteResumeAction(resumeId: string): Promise<void> {
+  if (!uuidRegex.test(resumeId)) return;
   await dbService.deleteResume(resumeId);
 }
 
 export async function archiveResumeAction(resumeId: string, isArchived: boolean): Promise<void> {
+  if (!uuidRegex.test(resumeId)) return;
   await dbService.updateResumeMetadata(resumeId, { isArchived });
 }
 
 export async function favoriteResumeAction(resumeId: string, isFavorite: boolean): Promise<void> {
+  if (!uuidRegex.test(resumeId)) return;
   await dbService.updateResumeMetadata(resumeId, { isFavorite });
 }
 
 export async function duplicateResumeAction(resumeId: string): Promise<string> {
+  if (!uuidRegex.test(resumeId)) return "";
   return await dbService.duplicateResume(resumeId);
 }
 
 export async function saveResumeFullAction(resumeId: string, resumeData: Partial<Resume>): Promise<void> {
+  if (!uuidRegex.test(resumeId)) return;
   // 1. Save top-level resume metadata (excluding sections)
   const metadataToSave: any = {};
   if (resumeData.title !== undefined) metadataToSave.title = resumeData.title;

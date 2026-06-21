@@ -424,7 +424,11 @@ export function ResumePreviewCanvas({
           </div>
         ) : (
           <div className="space-y-3.5">
-            {items.map((item, idx) => renderItem(item, idx))}
+            {items.map((item, idx) => (
+              <React.Fragment key={item.id || idx}>
+                {renderItem(item, idx)}
+              </React.Fragment>
+            ))}
           </div>
         )}
       </div>
