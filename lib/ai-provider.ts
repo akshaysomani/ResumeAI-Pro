@@ -46,7 +46,13 @@ export async function getAIStream(
   let body: any = {};
 
   if (provider === "gemini") {
-    url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    const isOAuth = apiKey.startsWith("ya29.") || apiKey.startsWith("AQ.");
+    if (isOAuth) {
+      url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+      headers["Authorization"] = `Bearer ${apiKey}`;
+    } else {
+      url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    }
     body = {
       contents: [
         {
