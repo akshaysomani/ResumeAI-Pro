@@ -412,8 +412,17 @@ function getMockAIContent(payload: PromptPayload): string {
   }
 
   // 4. Career Roadmap
-  if (sys.includes("career transition roadmap") || sys.includes("milestone steps") || usr.includes("career transition roadmap")) {
-    return JSON.stringify({
+  if (
+    sys.includes("career transition roadmap") || 
+    sys.includes("milestone steps") || 
+    sys.includes("planner for free accounts") || 
+    usr.includes("career transition roadmap")
+  ) {
+    const goalMatch = payload.user.match(/Career Goal Target:\s*([^\n]+)/i);
+    const targetGoal = goalMatch ? goalMatch[1].trim() : "Software Engineer";
+    const goalLower = targetGoal.toLowerCase();
+
+    let roadmapData = {
       milestones: [
         {
           title: "Phase 1: Advanced Frontend & System Architecture",
@@ -433,11 +442,104 @@ function getMockAIContent(payload: PromptPayload): string {
       books: ["Designing Data-Intensive Applications by Martin Kleppmann", "Clean Architecture by Robert C. Martin"],
       courses: ["Advanced React Pattern Workshop", "Kubernetes Hands-On Course"],
       projects: ["Automated Deployment Pipeline Tool", "Real-Time Collaborative Dashboard using WebSockets"]
-    });
+    };
+
+    if (goalLower.includes("ai") || goalLower.includes("machine learning") || goalLower.includes("data scientist") || goalLower.includes("data engineer")) {
+      roadmapData = {
+        milestones: [
+          {
+            title: "Phase 1: Foundations of Machine Learning & Big Data Engineering",
+            description: "Master Python programming, linear algebra, multivariate calculus, probability/statistics, and core data engineering workflows using Pandas and NumPy.",
+            estimatedTime: "8 weeks",
+            resources: ["Python for Data Analysis by Wes McKinney", "Data Science Specialization on Coursera"]
+          },
+          {
+            title: "Phase 2: Deep Learning, NLP & Large Language Models",
+            description: "Deep dive into Neural Networks, Transformer architectures, sequence modeling, model fine-tuning with HuggingFace, and configuring vector databases.",
+            estimatedTime: "12 weeks",
+            resources: ["Deep Learning Specialization by Andrew Ng", "HuggingFace Course Guides"]
+          },
+          {
+            title: "Phase 3: AI System Design & Scalable MLOps Deployment",
+            description: "Build robust model training and inference pipelines. Study feature stores, containerize models, configure MLOps CI/CD, and learn model tracking.",
+            estimatedTime: "16 weeks",
+            resources: ["Designing Machine Learning Systems by Chip Huyen", "MLOps Engineering on AWS"]
+          }
+        ],
+        certifications: ["Google Cloud Professional Data Engineer", "AWS Certified Machine Learning - Specialty"],
+        skillsToAcquire: ["Python", "PyTorch", "Transformers", "Vector Databases (Pinecone/pgvector)", "MLOps", "Kubernetes", "SQL", "Spark"],
+        books: ["Hands-On Machine Learning by Aurélien Géron", "Designing Machine Learning Systems by Chip Huyen"],
+        courses: ["Deep Learning Specialization (Coursera)", "MLOps Engineering on AWS"],
+        projects: ["Fine-tuned GPT Customer Support Agent", "Real-Time Image Classification Pipeline on GKE"]
+      };
+    } else if (goalLower.includes("devops") || goalLower.includes("cloud") || goalLower.includes("sre") || goalLower.includes("infrastructure")) {
+      roadmapData = {
+        milestones: [
+          {
+            title: "Phase 1: Linux Administration, Networking & Scripting",
+            description: "Learn command-line operations, file system management, shell script automation, networking protocols (TCP/IP, DNS, HTTP), and Linux security.",
+            estimatedTime: "6 weeks",
+            resources: ["Linux Command Line and Shell Scripting Bible", "CompTIA Network+ Study Guides"]
+          },
+          {
+            title: "Phase 2: Containerization, Kubernetes & Infrastructure as Code",
+            description: "Deep dive into containerizing applications with Docker. Master Kubernetes architectures, cluster setup, and infrastructure orchestration using Terraform.",
+            estimatedTime: "10 weeks",
+            resources: ["Certified Kubernetes Administrator (CKA) Study Guide", "Terraform Up & Running by Yevgeniy Brikman"]
+          },
+          {
+            title: "Phase 3: CI/CD Automation, Monitoring & Cloud Architectures",
+            description: "Build continuous delivery pipelines. Configure observability tools (Prometheus, Grafana, ELK), and learn secure multi-region public cloud setups.",
+            estimatedTime: "8 weeks",
+            resources: ["Site Reliability Engineering by Google", "AWS Solutions Architect training"]
+          }
+        ],
+        certifications: ["Certified Kubernetes Administrator (CKA)", "AWS Certified Solutions Architect - Associate"],
+        skillsToAcquire: ["Docker", "Kubernetes", "Terraform", "CI/CD (GitHub Actions/Jenkins)", "Prometheus", "Grafana", "AWS/GCP", "Bash/Python"],
+        books: ["Site Reliability Engineering by Google", "Terraform Up & Running by Yevgeniy Brikman"],
+        courses: ["CKA Prep Course (Udemy)", "Terraform on AWS (Pluralsight)"],
+        projects: ["Multi-Region High-Availability VPC Setup", "GitOps Kubernetes Git Pull Deployer"]
+      };
+    } else if (goalLower.includes("product") || goalLower.includes("project") || goalLower.includes("manager") || goalLower.includes("pm")) {
+      roadmapData = {
+        milestones: [
+          {
+            title: "Phase 1: Product Strategy, Market Analysis & User Research",
+            description: "Study product discovery frameworks. Write Product Requirement Documents (PRDs), create wireframes, and run user interview feedback loops.",
+            estimatedTime: "6 weeks",
+            resources: ["Inspired by Marty Cagan", "Product Management Specialization on Coursera"]
+          },
+          {
+            title: "Phase 2: Agile Methodologies, Sprints & Team Execution",
+            description: "Master Agile software development practices. Learn scrum master responsibilities, backlog grooming (RICE/MoSCoW), and Jira project workflows.",
+            estimatedTime: "8 weeks",
+            resources: ["Jira Software Guides", "Agile Software Development Course"]
+          },
+          {
+            title: "Phase 3: Product Data Analytics, Metrics & Stakeholder Alignment",
+            description: "Learn to query data with SQL, configure product analysis platforms (Amplitude/Mixpanel), set up A/B testing, and align stakeholders.",
+            estimatedTime: "10 weeks",
+            resources: ["The Lean Product Playbook by Dan Olsen", "SQL for Product Analytics"]
+          }
+        ],
+        certifications: ["Certified Scrum Product Owner (CSPO)", "Pragmatic Institute Certified"],
+        skillsToAcquire: ["Product Discovery", "PRD Drafting", "Agile/Scrum", "Jira", "Amplitude/Mixpanel", "SQL", "A/B Testing", "Stakeholder Alignment"],
+        books: ["Inspired by Marty Cagan", "The Lean Product Playbook by Dan Olsen"],
+        courses: ["Product Management Specialization (Coursera)", "Agile Software Development"],
+        projects: ["Comprehensive Product PRD & User Flow Map", "Competitor Gap Analysis & Feature Matrix"]
+      };
+    }
+
+    return JSON.stringify(roadmapData);
   }
 
   // 5. Salary Estimation
-  if (sys.includes("compensation analyst") || sys.includes("salary dynamics") || usr.includes("salary insights")) {
+  if (
+    sys.includes("compensation analyst") || 
+    sys.includes("salary dynamics") || 
+    sys.includes("analyst for free accounts") || 
+    usr.includes("salary insights")
+  ) {
     return JSON.stringify({
       rangeMin: 105000,
       rangeMax: 155000,
@@ -609,6 +711,102 @@ function getMockAIContent(payload: PromptPayload): string {
   // 11. Professional Summary
   if (sys.includes("professional summary") || usr.includes("professional summary")) {
     return "Results-driven professional with extensive expertise in software development, cloud systems, and project leadership. Demonstrated track record of optimizing system architectures, leading cross-functional teams, and implementing scalable solutions that drive efficiency and revenue. Passionate about leveraging cutting-edge technologies to solve complex business challenges.";
+  }
+
+  // 12. AI Assistant Chatbot
+  if (sys.includes("ai resume and career assistant")) {
+    const userMessageMatch = payload.user.match(/User message:\s*([\s\S]*?)(?:\nAssistant:|$)/i);
+    const userMessage = userMessageMatch ? userMessageMatch[1].trim() : payload.user;
+    const cleanUserQuery = userMessage.toLowerCase();
+
+    if (cleanUserQuery.includes("hello") || cleanUserQuery.includes("hi") || cleanUserQuery.includes("hey")) {
+      return "Hello! I am your conversational ResumeAI assistant. How can I help you write, polish, or format your resume details today?";
+    }
+    if (cleanUserQuery.includes("rewrite") || cleanUserQuery.includes("bullet") || cleanUserQuery.includes("metrics")) {
+      return "Here is a metric-driven rewrite for your bullet point:\n\n'Spearheaded development of 12 responsive web landing pages using React and Tailwind CSS, increasing user engagement metrics by 34% and accelerating customer acquisition speeds.'";
+    }
+    if (cleanUserQuery.includes("summary") || cleanUserQuery.includes("intro")) {
+      return "Here is a professional summary draft:\n\n'Highly motivated and detail-oriented Junior Full Stack Developer with 1+ years of experience designing, building, and deploying responsive web applications using React, Node.js, and PostgreSQL. Skilled in writing clean, modular code, optimizing database performance, and implementing secure user authentication workflows.'";
+    }
+    if (cleanUserQuery.includes("skills") || cleanUserQuery.includes("devops")) {
+      return "For a Cloud DevOps engineer resume, here are the top 5 highly recommended technical skills to list:\n\n1. Cloud Platforms: AWS (EC2, S3, RDS, IAM) or GCP\n2. Containerization & Orchestration: Docker, Kubernetes\n3. Infrastructure as Code (IaC): Terraform\n4. CI/CD Pipelines: GitHub Actions, Jenkins, GitLab CI\n5. Monitoring & Logging: Prometheus, Grafana, ELK Stack";
+    }
+    return `I received your message: "${userMessage}". As your ResumeAI Assistant, I recommend rewriting this section using strong action verbs (e.g. spearhead, launch, optimize), including measurable results where possible, and aligning the vocabulary directly with your target job description.`;
+  }
+
+  // 13. Auto-Fix Resume
+  if (sys.includes("elite resume optimization engine")) {
+    try {
+      const match = payload.user.match(/RESUME SECTIONS JSON:\s*([\s\S]+)/i);
+      const sectionsJson = match ? match[1].trim() : "";
+      if (sectionsJson) {
+        const sections = JSON.parse(sectionsJson);
+        if (Array.isArray(sections)) {
+          return JSON.stringify(sections.map((sec: any) => {
+            if (sec.sectionType === "summary") {
+              return {
+                ...sec,
+                content: {
+                  ...sec.content,
+                  text: "Results-driven Software Engineer with a proven track record of designing, building, and optimizing high-performance, ATS-compliant web applications. Expert in React, Next.js, Node.js, PostgreSQL, and CI/CD pipelines. Skilled in translating complex requirements into clean, scalable software, establishing secure authentication, and improving database responsiveness."
+                }
+              };
+            }
+            if (sec.sectionType === "skills") {
+              const currentContent = Array.isArray(sec.content) ? sec.content : [];
+              const updatedContent = [...currentContent];
+              const toAdd = ["Next.js", "CI/CD Orchestration", "System Design", "AWS Cloud Practitioner", "GraphQL"];
+              toAdd.forEach((sk, idx) => {
+                if (!updatedContent.some((s: any) => s.name?.toLowerCase() === sk.toLowerCase())) {
+                  updatedContent.push({
+                    id: `item-autofix-${Date.now()}-${idx}`,
+                    name: sk,
+                    category: "Technical",
+                    proficiency: "Intermediate"
+                  });
+                }
+              });
+              return { ...sec, content: updatedContent };
+            }
+            if (sec.sectionType === "experience") {
+              const currentContent = Array.isArray(sec.content) ? sec.content : [];
+              const updatedContent = currentContent.map((item: any, idx: number) => {
+                if (idx === 0) {
+                  return {
+                    ...item,
+                    description: "• Spearheaded frontend refactoring to React and Next.js, enhancing page rendering speed by 40% and user retention by 15%.\n• Designed and integrated secure backend REST API endpoints, handling over 10k daily active sessions with 99.9% uptime.\n• Implemented automated CI/CD deployment pipelines on AWS, decreasing software delivery cycles by 30%."
+                  };
+                }
+                return item;
+              });
+              return { ...sec, content: updatedContent };
+            }
+            return sec;
+          }));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse mock autofix sections:", e);
+    }
+    return "[]";
+  }
+
+  // 14. Career Coach Chat
+  if (sys.includes("principal ai career coach")) {
+    const userMessageMatch = payload.user.match(/User message:\s*([\s\S]*?)(?:\nCoach response:|$)/i);
+    const userMessage = userMessageMatch ? userMessageMatch[1].trim() : payload.user;
+    const cleanUserQuery = userMessage.toLowerCase();
+
+    if (cleanUserQuery.includes("hello") || cleanUserQuery.includes("hi") || cleanUserQuery.includes("hey")) {
+      return "Hello! I am your Executive Career Coach and Mentor. I can help you with career transitions, promotion strategy, skill acquisition, or salary negotiations. What is your current career goal?";
+    }
+    if (cleanUserQuery.includes("promotion") || cleanUserQuery.includes("raise") || cleanUserQuery.includes("negotiate")) {
+      return "To negotiate a promotion or salary raise effectively, I recommend following these 3 steps:\n\n1. Document your quantifiable impact over the last 6-12 months (e.g. projects delivered, revenue generated, systems optimized).\n2. Research market benchmarks for your role and location using tools like Salary Explorer.\n3. Schedule a dedicated 1-on-1 with your manager to discuss your career progression and impact, focusing on value added rather than personal needs.";
+    }
+    if (cleanUserQuery.includes("transition") || cleanUserQuery.includes("switch") || cleanUserQuery.includes("change")) {
+      return "Transitioning to a new field or role requires building a bridge between your current transferable skills and the target role requirements:\n\n1. Identify the skill gaps (e.g. by running a Skill Gap Analysis in our dashboard).\n2. Build 2-3 portfolio projects demonstrating the target skills.\n3. Update your resume and LinkedIn to highlight projects and transferable competencies rather than legacy role duties.";
+    }
+    return `As your Career Coach, I've analyzed your question regarding: "${userMessage}". My recommendation is to focus on establishing a clear roadmap, identifying specific skill gaps, and building high-impact portfolio projects to demonstrate competency. How can I help you refine this approach?`;
   }
 
   // Default fallback text for general chat or unhandled prompts

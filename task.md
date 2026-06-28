@@ -1,0 +1,38 @@
+- [x] Fix Authentication & Logout Redirection (Issues 1 & 5)
+  - [x] Update `components/auth-provider.tsx` (clear cookie first, handle SIGNED_OUT event, redirect)
+  - [x] Update `app/auth/page.tsx` (add bypass for forgot password)
+  - [x] Update `app/auth/reset-password/page.tsx` (add bypass for reset password update)
+- [x] Update Free Tier Interview Session Limit to 10 (Issue 2)
+  - [x] Modify client limit check in `app/dashboard/interview/page.tsx`
+  - [x] Modify server limit check in `app/api/intelligence/interview/generate/route.ts`
+- [x] Implement ATS Auto-Fix Feature (Issue 3)
+  - [x] Define prompt builder in `lib/ai-prompts.ts`
+  - [x] Add mock handler in `lib/ai-provider.ts`
+  - [x] Create `/api/ai/auto-fix` route in `app/api/ai/auto-fix/route.ts`
+  - [x] Add UI button and handler in `app/dashboard/job-matcher/page.tsx`
+- [x] Polish AI Assistant Chatbot Prompt & Context (Issue 4)
+  - [x] Define conversational assistant prompt in `lib/ai-prompts.ts`
+  - [x] Integrate assistant sectionType in `app/api/ai/generate/route.ts`
+  - [x] Update payload call in `app/dashboard/ai-assistant/page.tsx`
+- [x] Profile unique constraint "profiles_email_key" violation fix (Runtime Bug Fix)
+  - [x] Implement stable mock user UUIDs helper in `app/auth/page.tsx`
+  - [x] Add try-catch fallback check in `ensureLocalProfile` inside `services/dbService.ts`
+- [x] Raise AI Assistant Daily Credits limit to 35
+  - [x] Modify daily credits limit output to 35 in `app/api/ai/usage/route.ts`
+  - [x] Initialize client limit values to 35 in `app/dashboard/page.tsx` and `app/dashboard/editor/page.tsx`
+  - [x] Update server-side limit check and error messaging to 35 in `app/api/ai/generate/route.ts`
+- [x] Fix AI Writing Assistant and Career Intelligence Suite Features
+  - [x] Fix mock parser in `lib/ai-provider.ts` for AI Writing Assistant to avoid echoplex response
+  - [x] Implement dedicated Career Coach chatbot handler inside `getMockAIContent`
+  - [x] Support rewritten Free system prompt criteria for roadmaps and salary estimation to return valid JSON
+- [x] Fix Theme Toggles & Light Theme Mode (New Issues 1 & 3)
+  - [x] Fix `useEffect` load loop in `app/dashboard/settings/page.tsx` by setting dependencies to `[user?.id]`
+  - [x] Add light mode class overrides block to the end of `app/globals.css` to translate hardcoded dark panels to light backgrounds
+  - [x] Replace `text-zinc-50` and `text-zinc-400` heading/description styles with semantic classes in dashboard layouts
+- [x] Dynamic Career Goal Roadmaps (New Issue 2)
+  - [x] Extract target goal role from incoming user queries in `lib/ai-provider.ts`
+  - [x] Support specific milestone paths, certifications, books, and courses for AI Engineers, DevOps/SREs, Product Managers, and Full-Stack Developers
+  - [x] Update chatbot mentor to reply to text questions with custom role-based roadmaps
+- [x] Verification
+  - [x] Run Next.js build to verify TS compilation
+  - [x] Validate manual behavior flows

@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       count,
-      limit: 5,
+      limit: 35,
       plan,
     });
   } catch (error: any) {

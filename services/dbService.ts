@@ -30,12 +30,35 @@ import type {
  * guarantee a local profile row exists before inserting dependent records.
  */
 export async function ensureLocalProfile(userId: string, email?: string, fullName?: string): Promise<void> {
-  await db.query(
-    `INSERT INTO public.profiles (id, email, full_name, created_at, updated_at)
-     VALUES ($1, $2, $3, now(), now())
-     ON CONFLICT (id) DO NOTHING`,
-    [userId, email || "", fullName || "User Account"]
-  );
+  try {
+    await db.query(
+      `INSERT INTO public.profiles (id, email, full_name, created_at, updated_at)
+       VALUES ($1, $2, $3, now(), now())
+       ON CONFLICT (id) DO NOTHING`,
+      [userId, email || "", fullName || "User Account"]
+    );
+  } catch (err: any) {
+    // Unique constraint violation (23505) on profiles_email_key
+    if (err.code === "23505" && email) {
+      const conflictQuery = await db.query(`SELECT id FROM public.profiles WHERE email = $1`, [email]);
+      if (conflictQuery.rows.length > 0) {
+        const conflictingId = conflictQuery.rows[0].id;
+        // Suffix the conflicting email to release the unique constraint
+        const releasedEmail = `${email}_released_${Date.now()}`;
+        await db.query(`UPDATE public.profiles SET email = $1 WHERE id = $2`, [releasedEmail, conflictingId]);
+        
+        // Retry inserting the new user profile row
+        await db.query(
+          `INSERT INTO public.profiles (id, email, full_name, created_at, updated_at)
+           VALUES ($1, $2, $3, now(), now())
+           ON CONFLICT (id) DO NOTHING`,
+          [userId, email || "", fullName || "User Account"]
+        );
+        return;
+      }
+    }
+    throw err;
+  }
 }
 
 export async function createResume(

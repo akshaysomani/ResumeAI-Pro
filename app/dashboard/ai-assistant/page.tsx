@@ -59,11 +59,10 @@ export default function AIAssistantPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          sectionType: "generic",
+          sectionType: "assistant",
           payload: {
-            sectionType: "AI Career Assistant",
-            instructions: text,
-            tone: "professional",
+            userMessage: text,
+            chatHistory: messages.map((m) => ({ sender: m.sender, text: m.text })),
           },
           resumeId: null,
         }),

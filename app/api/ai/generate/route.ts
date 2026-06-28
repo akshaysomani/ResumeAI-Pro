@@ -9,6 +9,7 @@ import {
   buildSkillsPrompt,
   buildRewritePrompt,
   buildGenericPrompt,
+  buildAssistantPrompt,
   PromptPayload,
 } from "@/lib/ai-prompts";
 
@@ -55,9 +56,9 @@ export async function POST(req: NextRequest) {
       const { rows: countRows } = await db.query(countQuery, [user.id]);
       const dailyCount = parseInt(countRows[0].count, 10);
 
-      if (dailyCount >= 100) {
+      if (dailyCount >= 35) {
         return NextResponse.json(
-          { error: "Daily limit of 100 AI generations reached. Upgrade to Pro for unlimited usage." },
+          { error: "Daily limit of 35 AI generations reached. Upgrade to Pro for unlimited usage." },
           { status: 429 }
         );
       }
@@ -84,6 +85,9 @@ export async function POST(req: NextRequest) {
           break;
         case "generic":
           promptPayload = buildGenericPrompt(payload);
+          break;
+        case "assistant":
+          promptPayload = buildAssistantPrompt(payload);
           break;
         default:
           return NextResponse.json(

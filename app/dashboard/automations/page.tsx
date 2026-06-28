@@ -26,10 +26,10 @@ export default async function AutomationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-50">
+        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
           Automations Workspace
         </h2>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Design custom trigger-action pipelines. Automatically send Slack notifications when a resume is updated, sync backup files, or alert team members of career coach feedback.
         </p>
       </div>

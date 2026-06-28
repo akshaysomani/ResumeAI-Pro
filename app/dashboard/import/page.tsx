@@ -22,10 +22,10 @@ export default async function ResumeImportPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-50">
+        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
           Import Resume Wizard
         </h2>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Upload existing PDF/DOCX resumes, sync profiles from GitHub or LinkedIn, or import backup JSON files to instantly bootstrap or update your profile.
         </p>
       </div>

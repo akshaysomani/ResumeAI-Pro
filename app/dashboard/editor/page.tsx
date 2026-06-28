@@ -161,7 +161,7 @@ export default function ResumeEditorPage() {
   });
   const [aiOutputText, setAiOutputText] = useState("");
   const [isAiStreaming, setIsAiStreaming] = useState(false);
-  const [dailyAiUsage, setDailyAiUsage] = useState({ count: 0, limit: 5, plan: "free" as "free" | "pro" });
+  const [dailyAiUsage, setDailyAiUsage] = useState({ count: 0, limit: 35, plan: "free" as "free" | "pro" });
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const aiAbortControllerRef = useRef<AbortController | null>(null);
 

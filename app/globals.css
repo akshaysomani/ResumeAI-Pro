@@ -154,3 +154,44 @@ body {
     border: none !important;
   }
 }
+
+/* Light Mode Overrides for Hardcoded Dark Dashboard Components */
+html:not(.dark) {
+  /* Override bg-zinc-950/bg-zinc-900 to be light card styles */
+  .bg-zinc-950 {
+    background-color: #ffffff !important;
+  }
+  .bg-zinc-900 {
+    background-color: #f4f4f5 !important; /* bg-zinc-100 */
+  }
+  .bg-zinc-900\/20, .bg-zinc-900\/10, .bg-zinc-900\/30, .bg-zinc-900\/60 {
+    background-color: rgba(244, 244, 245, 0.4) !important;
+  }
+  .border-zinc-900, .border-zinc-800, .border-zinc-850 {
+    border-color: #e4e4e7 !important; /* border-zinc-200 */
+  }
+  .border-dashed.border-zinc-900 {
+    border-color: #d4d4d8 !important; /* border-zinc-300 */
+  }
+  .text-zinc-50 {
+    color: #09090b !important; /* text-zinc-950 */
+  }
+  .text-zinc-100 {
+    color: #18181b !important; /* text-zinc-900 */
+  }
+  .text-zinc-200 {
+    color: #27272a !important; /* text-zinc-800 */
+  }
+  .text-zinc-300 {
+    color: #3f3f46 !important; /* text-zinc-700 */
+  }
+  .text-zinc-400 {
+    color: #71717a !important; /* text-zinc-500 */
+  }
+  .hover\:bg-zinc-900:hover, .hover\:bg-zinc-800:hover {
+    background-color: #e4e4e7 !important;
+  }
+  .peer:checked ~ .bg-zinc-800 {
+    background-color: #6366f1 !important; /* bg-indigo-600 */
+  }
+}

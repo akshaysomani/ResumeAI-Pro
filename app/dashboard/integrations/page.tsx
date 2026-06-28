@@ -22,10 +22,10 @@ export default async function IntegrationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-50">
+        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
           Integrations Marketplace
         </h2>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Connect your favorite third-party services to automatically sync resumes, export PDFs, post job applications, and schedule interview training.
         </p>
       </div>

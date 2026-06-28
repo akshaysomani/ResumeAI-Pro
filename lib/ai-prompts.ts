@@ -545,3 +545,52 @@ ${resumeContext ? `\nResume background:\n${resumeContext}` : ""}`
   };
 }
 
+export function buildAssistantPrompt(data: {
+  userMessage: string;
+  chatHistory?: { sender: "bot" | "user"; text: string }[];
+}): PromptPayload {
+  const historyText = data.chatHistory
+    ? data.chatHistory
+        .map((m) => `${m.sender === "user" ? "User" : "Assistant"}: ${m.text}`)
+        .join("\n")
+    : "";
+
+  return {
+    system: `You are an AI Resume and Career Assistant. Your job is to help users write, polish, and optimize their resumes.
+You can help with drafting professional summaries, rewriting bullet points to be metric-driven, selecting resume sections, and general job application guidance.
+Provide supportive, professional, and clear advice. Keep answers relatively concise and easy to read.`,
+    user: `${historyText ? `Conversation history:\n${historyText}\n` : ""}User message: ${data.userMessage}\nAssistant:`
+  };
+}
+
+export function buildAutoFixResumePrompt(data: {
+  resumeJson: string;
+  jobDescription: string;
+  recommendations: string[];
+}): PromptPayload {
+  return {
+    system: `You are an elite resume optimization engine.
+Your task is to take a complete resume JSON (specifically the "sections" array) and automatically modify it to incorporate recommendations and align with the target job description.
+
+Guidelines:
+1. Preserve the structural schema. Do not change section IDs, sectionTypes, or basic shapes.
+2. In the personal summary section, rewrite or enhance the text to integrate relevant keywords and highlights matching the job description.
+3. In work experience and projects sections, rewrite descriptions or bullet points to incorporate missing technical skills, emphasize relevant accomplishments, and improve action verb choices based on recommendations.
+4. Add recommended/missing skills to the skills section if appropriate.
+5. Do NOT hallucinate entirely new work histories or fake degrees. Only enhance and rephrase existing content to better align with target keywords and requirements.
+6. You MUST return a valid JSON array representing the updated "sections" array.
+7. Return ONLY valid JSON. No markdown backticks, no comments, no explanations.`,
+    user: `Modify the resume sections JSON to integrate these recommendations and target the job description.
+
+RECOMMENDATIONS:
+${data.recommendations.map((r) => `- ${r}`).join("\n")}
+
+JOB DESCRIPTION:
+${data.jobDescription}
+
+RESUME SECTIONS JSON:
+${data.resumeJson}
+`
+  };
+}
+

@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const { user, profile } = useAuth();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState({ used: 0, limit: 5 });
+  const [credits, setCredits] = useState({ used: 0, limit: 35 });
   const [avgInterviewScore, setAvgInterviewScore] = useState<number | null>(null);
   const [activeGoalCount, setActiveGoalCount] = useState<number>(0);
   const [avgGoalProgress, setAvgGoalProgress] = useState<number>(0);

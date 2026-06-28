@@ -23,7 +23,8 @@ import {
   Check,
   Plus,
   ArrowRight,
-  Sparkle
+  Sparkle,
+  RefreshCw
 } from "lucide-react";
 import type { Resume } from "@/types";
 
@@ -62,6 +63,7 @@ export default function JobMatcherPage() {
   // Skills checking list
   const [checkedSkills, setCheckedSkills] = useState<string[]>([]);
   const [appendingSkills, setAppendingSkills] = useState(false);
+  const [autoFixing, setAutoFixing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -263,6 +265,37 @@ export default function JobMatcherPage() {
       error(err.message || "Failed to add skills to resume.");
     } finally {
       setAppendingSkills(false);
+    }
+  };
+
+  const handleAutoFixResume = async () => {
+    if (!selectedResumeId || !results) return;
+    setAutoFixing(true);
+    try {
+      const res = await fetch("/api/ai/auto-fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeId: selectedResumeId,
+          recommendations: results.recommendations,
+          jobDescription,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to auto-fix resume.");
+      }
+
+      success("AI recommendations applied successfully! Your resume has been directly updated.");
+      
+      // Re-run match analysis to show updated score!
+      await handleAnalyze();
+    } catch (err: any) {
+      console.error("Auto-Fix error:", err);
+      error(err.message || "Failed to auto-apply recommendations.");
+    } finally {
+      setAutoFixing(false);
     }
   };
 
@@ -722,6 +755,23 @@ export default function JobMatcherPage() {
                       onClick={() => success("Opening download prompt...")}
                     >
                       Export Report
+                    </Button>
+                    <Button
+                      onClick={handleAutoFixResume}
+                      disabled={autoFixing}
+                      className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1.5"
+                    >
+                      {autoFixing ? (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          Auto-Fixing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Auto-Fix Resume
+                        </>
+                      )}
                     </Button>
                     <a href={`/dashboard/editor?id=${selectedResumeId}`}>
                       <Button className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1">

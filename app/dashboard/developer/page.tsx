@@ -32,10 +32,10 @@ export default async function DeveloperPortalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-50">
+        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
           Developer Portal
         </h2>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Configure secure API keys, manage client OAuth applications, and set up webhook endpoints to build custom integrations.
         </p>
       </div>

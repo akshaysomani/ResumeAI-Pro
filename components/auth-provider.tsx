@@ -96,6 +96,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (event === "SIGNED_OUT") {
+          if (typeof window !== "undefined") {
+            document.cookie = "mock_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          }
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          if (typeof window !== "undefined") {
+            window.location.href = "/auth";
+          }
+          return;
+        }
+
         let sessionUser = session?.user || null;
         if (!sessionUser) {
           sessionUser = getMockUser();
@@ -119,16 +132,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     try {
+      if (typeof window !== "undefined") {
+        document.cookie = "mock_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      }
       try {
         await supabase.auth.signOut();
       } catch (e) {}
       
-      // Clear mock cookie
-      if (typeof window !== "undefined") {
-        document.cookie = "mock_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      }
       setUser(null);
       setProfile(null);
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth";
+      }
     } catch (error) {
       console.error("Error signing out:", error);
     } finally {

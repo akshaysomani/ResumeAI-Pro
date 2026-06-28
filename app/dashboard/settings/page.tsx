@@ -59,7 +59,7 @@ export default function SettingsPage() {
       }
     }
     loadSettings();
-  }, [user, setTheme]);
+  }, [user?.id]);
 
   const handleSave = async () => {
     if (!user) return;

@@ -121,9 +121,9 @@ export default function MockInterviewPage() {
     setSubmitting(true);
 
     try {
-      // Free plan check: max 2 sessions total
-      if (plan === "free" && sessions.length >= 2) {
-        setErrorMsg("Free plan limit reached (max 2 interview sessions). Upgrade to Pro for unlimited prep.");
+      // Free plan check: max 10 sessions total
+      if (plan === "free" && sessions.length >= 10) {
+        setErrorMsg("Free plan limit reached (max 10 interview sessions). Upgrade to Pro for unlimited prep.");
         setSubmitting(false);
         return;
       }

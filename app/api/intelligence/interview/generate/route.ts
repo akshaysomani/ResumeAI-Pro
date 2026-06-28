@@ -91,12 +91,12 @@ export async function POST(req: NextRequest) {
 
     // Enforce limits for free plan
     if (plan === "free") {
-      // Free users limit of 2 sessions total
+      // Free users limit of 10 sessions total
       const totalSessionsQuery = `SELECT COUNT(*) as count FROM public.interview_sessions WHERE user_id = $1`;
       const { rows: totalSessionsRows } = await db.query(totalSessionsQuery, [user.id]);
       const sessionCount = parseInt(totalSessionsRows[0].count, 10);
-      if (sessionCount > 2) {
-        return NextResponse.json({ error: "Free plan is limited to 2 mock interview sessions. Upgrade to Pro for unlimited sessions." }, { status: 403 });
+      if (sessionCount > 10) {
+        return NextResponse.json({ error: "Free plan is limited to 10 mock interview sessions. Upgrade to Pro for unlimited sessions." }, { status: 403 });
       }
 
       // Free users limit of 5 questions per session
