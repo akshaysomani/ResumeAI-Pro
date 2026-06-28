@@ -1,290 +1,479 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  Sparkles,
-  Target,
-  FileText,
-  MousePointerClick,
-  Share2,
-  Download,
-  Sun,
-  Moon,
-  ChevronDown,
-  ArrowRight,
-  ShieldCheck,
-  Star,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { Sun, Moon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export default function LandingPage() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  const [progressWidth, setProgressWidth] = useState(0);
 
-  const faqItems = [
+  useEffect(() => {
+    // Animate profile completeness progress bar on load
+    const timer = setTimeout(() => {
+      setProgressWidth(87);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const docContents = [
     {
-      q: "What is an ATS-friendly resume?",
-      a: "Applicant Tracking Systems (ATS) scan resumes for specific layout structures and keyword densities before recruiters see them. Our templates use standard single-column sections and machine-readable text to ensure 100% compatibility.",
+      title: "Outreach & Networking Emails",
+      icon: "✉️",
+      hint: "High-impact, concise, action-oriented",
+      previewLines: [
+        { width: "70%", text: "Subject: Request for Career Chat / Akshay Somani", isTitle: true },
+        { width: "100%", text: "Dear Technical Recruiter," },
+        { width: "95%", text: "I recently reviewed your engineering team's open postings and was fascinated by your real-time cloud data pipeline scaling initiatives." },
+        { width: "90%", text: "With 3 years of React/Next.js experience and a deep focus on Supabase data modeling, I would love to connect for a quick 10-minute chat." },
+        { width: "50%", text: "Best regards, Candidate" }
+      ]
     },
     {
-      q: "How does the AI builder write bullet points?",
-      a: "Our assistant analyzes your short prompt descriptors and expands them into action-oriented achievements with key performance metrics, aligning them to standard industry guidelines.",
+      title: "Statement of Purpose",
+      icon: "📝",
+      hint: "Academic highlights & institutional fit",
+      previewLines: [
+        { width: "85%", text: "Statement of Purpose - Graduate Computer Science", isTitle: true },
+        { width: "100%", text: "My research interests center on developing highly scalable, offline-first applications and client-side storage protocols." },
+        { width: "95%", text: "At my previous firm, I optimized schema configurations which successfully slashed server synchronization traffic by 40%." },
+        { width: "90%", text: "The dedicated research laboratories at your university align perfectly with my long-term career goals of building agentic systems." },
+        { width: "40%", text: "Submitted by the candidate." }
+      ]
     },
     {
-      q: "Can I download my resume as a PDF or DOCX file?",
-      a: "Yes! The visual editor supports print layout options, letting you print to PDF directly or export docx configurations.",
+      title: "Cover Letters",
+      icon: "💼",
+      hint: "Tailored to role & job description",
+      previewLines: [
+        { width: "75%", text: "Dear Lead Engineer at Google,", isTitle: true },
+        { width: "100%", text: "I am writing to express my enthusiastic interest in the Senior Full-Stack Engineer opening." },
+        { width: "95%", text: "My background building secure cloud architectures matches your core requirements. I have led teams in designing responsive frontends." },
+        { width: "90%", text: "I would be honored to bring my experience in real-time platforms to Google's engineering team." },
+        { width: "45%", text: "Sincerely, Akshay Somani" }
+      ]
     },
+    {
+      title: "Proposals & Introductions",
+      icon: "📊",
+      hint: "Budget, scope, timeline-aware",
+      previewLines: [
+        { width: "65%", text: "Project Proposal: Web Application Redesign", isTitle: true },
+        { width: "100%", text: "Scope: Port all customer-facing views to premium responsive designs and implement global themes." },
+        { width: "85%", text: "Budget: Standard Retained Rate | Timeline: 5 Working Days" },
+        { width: "95%", text: "Deliverables: Production-ready CSS-first layouts, integrated UI components, and visual validation reports." },
+        { width: "50%", text: "Prepared for ResumeAI Pro Team" }
+      ]
+    }
   ];
 
+  const handleTabChange = (index: number) => {
+    setIsTyping(true);
+    setActiveTab(index);
+    const timer = setTimeout(() => {
+      setIsTyping(false);
+    }, 450);
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
-      {/* Navigation bar */}
-      <nav className="h-16 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/70 backdrop-blur-md dark:bg-zinc-950/70 sticky top-0 z-40 flex items-center justify-between px-6 md:px-12 max-w-7xl mx-auto">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black">
-            R
-          </div>
-          <span>ResumeAI <span className="text-indigo-600 font-bold text-xs bg-indigo-50 dark:bg-indigo-950 px-1.5 py-0.5 rounded-md">PRO</span></span>
+    <div className="min-h-screen transition-colors duration-200">
+      {/* NAV */}
+      <nav className="fixed top-0 left-0 right-0 z-100 flex items-center justify-between py-5 px-6 md:px-12 bg-cream/85 dark:bg-zinc-950/85 backdrop-blur-md border-b border-black/5 dark:border-white/5">
+        <Link href="/" className="nav-logo flex items-center gap-2 font-serif text-lg text-ink dark:text-cream no-underline">
+          <span className="nav-logo-dot w-2.5 h-2.5 rounded-full bg-leaf"></span>
+          ResumeAI Pro
         </Link>
-
-        <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-zinc-600 dark:text-zinc-400">
-          <Link href="/templates" className="hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors">
-            Templates
-          </Link>
-          <Link href="/pricing" className="hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors">
-            Pricing
-          </Link>
-        </div>
-
+        <ul className="nav-links hidden md:flex items-center gap-8 list-none">
+          <li>
+            <a href="#features" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
+              Features
+            </a>
+          </li>
+          <li>
+            <a href="#documents" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
+              Documents
+            </a>
+          </li>
+          <li>
+            <a href="#pricing" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
+              Pricing
+            </a>
+          </li>
+          <li>
+            <Link href="/templates" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
+              Templates
+            </Link>
+          </li>
+        </ul>
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
+            className="rounded-lg text-ink-light dark:text-ink-faint hover:text-ink dark:hover:text-cream hover:bg-black/5 dark:hover:bg-white/5"
           >
-            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            {theme === "light" ? <Moon className="h-4.5 w-4.5" /> : <Sun className="h-4.5 w-4.5" />}
           </Button>
 
           {user ? (
-            <Link href="/dashboard">
-              <Button size="sm" className="font-semibold text-xs h-9 px-4">
-                Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </Button>
+            <Link href="/dashboard" className="nav-cta text-white font-sans text-xs py-2 px-5 rounded-full bg-ink hover:bg-leaf hover:text-white transition-all duration-200">
+              Dashboard →
             </Link>
           ) : (
-            <Link href="/auth">
-              <Button size="sm" className="font-semibold text-xs h-9 px-4">
-                Sign In
-              </Button>
+            <Link href="/auth" className="nav-cta text-white font-sans text-xs py-2 px-5 rounded-full bg-ink hover:bg-leaf hover:text-white transition-all duration-200">
+              Get Started →
             </Link>
           )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden hero-gradient py-20 px-6 max-w-7xl mx-auto text-center space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-4 max-w-3xl mx-auto"
-        >
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
-            <Sparkles className="h-3.5 w-3.5" /> Powered by Open AI-GPT Engine
-          </span>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-none bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-500 dark:from-white dark:via-zinc-100 dark:to-zinc-500 bg-clip-text text-transparent">
-            Build ATS-Friendly Resumes in Minutes
-          </h1>
-          <p className="text-md md:text-lg text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-            Generate bullet points, draft cover letters, adjust spacing, and verify match scores against job postings.
-          </p>
-        </motion.div>
+      {/* HERO */}
+      <section className="hero">
+        <div className="hero-bg"></div>
+        <div className="hero-inner">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="hero-text"
+          >
+            <div className="hero-label">
+              <span className="hero-label-dot"></span>
+              AI-Powered Career Suite
+            </div>
+            <h1 className="landing-h1">
+              Your career,<br /><em>articulated</em><br />beautifully.
+            </h1>
+            <p className="hero-sub">
+              ResumeAI Pro helps you craft cover letters, SOPs, outreach emails, and proposals — powered by AI, refined by intent.
+            </p>
+            <div className="hero-actions">
+              <Link href={user ? "/dashboard" : "/auth"} className="btn-primary">
+                Start Free
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+              <a href="#features" className="btn-secondary">See how it works ↓</a>
+            </div>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="flex justify-center gap-4"
-        >
-          <Link href={user ? "/dashboard" : "/auth"}>
-            <Button size="lg" className="font-bold">
-              Build My Resume <ArrowRight className="ml-1.5 h-4.5 w-4.5" />
-            </Button>
-          </Link>
-          <Link href="/templates">
-            <Button size="lg" variant="outline" className="font-bold">
-              View Templates
-            </Button>
-          </Link>
-        </motion.div>
-      </section>
-
-      {/* Feature Cards Grid */}
-      <section className="py-20 px-6 max-w-7xl mx-auto space-y-12">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Enterprise Features Built For Success</h2>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto">
-            Everything you need to compile, verify, and output perfect resumes.
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="h-10 w-10 rounded-lg bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                <Sparkles className="h-5 w-5" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="hero-visual"
+          >
+            <div className="hero-card border border-black/5 dark:border-white/5 dark:bg-zinc-900">
+              <div className="card-header">
+                <div className="card-avatar">A</div>
+                <span className="card-badge">✦ AI Active</span>
               </div>
-              <CardTitle className="text-sm font-bold mt-4">AI Writer Bullet Generator</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Translate basic tasks into action verbs and numbers to prove capability.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <Target className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-sm font-bold mt-4">ATS Job Spec Matcher</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Check compatibility against target descriptions and identify missing skill tags.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <MousePointerClick className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-sm font-bold mt-4">Visual Layout Editor</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Tweak fonts, accent colors, margin spacing, and item layout heights in A4 sheets.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Templates Catalog Preview */}
-      <section className="py-20 px-6 max-w-7xl mx-auto bg-zinc-50/50 dark:bg-zinc-950/30 border-y border-zinc-200/80 dark:border-zinc-800/80 space-y-12">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Approved Professional Templates</h2>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto">
-            Clean single-column layouts engineered to pass parsing checks.
-          </p>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-3 max-w-4xl mx-auto">
-          {["Modern Style", "Minimalist Style", "Executive Style"].map((name, i) => (
-            <Card key={i} className="group overflow-hidden">
-              <div className="h-60 bg-zinc-100 dark:bg-zinc-900 border-b flex items-center justify-center relative">
-                <FileText className="h-16 w-16 text-zinc-300 group-hover:scale-110 transition-transform duration-300" />
-                <div className="absolute inset-0 bg-indigo-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Link href="/templates">
-                    <Button size="sm" className="text-xs font-semibold">
-                      Use Template
-                    </Button>
-                  </Link>
+              <div className="card-title text-ink dark:text-cream">Cover Letter Draft</div>
+              <div className="card-sub">Software Engineer · Google · Generated just now</div>
+              <div className="card-metric">
+                <div className="metric-item dark:bg-zinc-800">
+                  <span className="metric-num text-ink dark:text-cream">94</span>
+                  <span className="metric-lbl">Match %</span>
+                </div>
+                <div className="metric-item dark:bg-zinc-800">
+                  <span className="metric-num text-ink dark:text-cream">3</span>
+                  <span className="metric-lbl">Versions</span>
+                </div>
+                <div className="metric-item dark:bg-zinc-800">
+                  <span className="metric-num text-ink dark:text-cream">Pro</span>
+                  <span className="metric-lbl">Tone</span>
                 </div>
               </div>
-              <div className="p-4 text-center">
-                <p className="text-xs font-bold">{name}</p>
+              <div className="card-progress-label">
+                <span>Profile completeness</span>
+                <span>87%</span>
               </div>
-            </Card>
-          ))}
+              <div className="card-progress">
+                <div className="card-progress-fill" style={{ width: `${progressWidth}%`, transition: "width 1.5s cubic-bezier(0.23, 1, 0.32, 1)" }}></div>
+              </div>
+              <div className="card-tags">
+                <span className="tag dark:border-zinc-800">TypeScript</span>
+                <span className="tag dark:border-zinc-800">Next.js</span>
+                <span className="tag dark:border-zinc-800">Supabase</span>
+                <span className="tag dark:border-zinc-800">ML Engineer</span>
+              </div>
+            </div>
+            <div className="hero-pill border border-black/5 dark:border-white/5 dark:bg-zinc-900 dark:text-cream">
+              <span className="pill-dot animate-ping"></span>
+              AI is generating your cover letter…
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 px-6 max-w-7xl mx-auto space-y-12">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Trusted By Candidates</h2>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto">
-            Read what professionals say about landing job interviews.
-          </p>
-        </div>
+      {/* FEATURES */}
+      <section className="features" id="features">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7 }}
+        >
+          <div className="section-label">What's inside</div>
+          <h2 className="section-title text-ink dark:text-cream">Everything you need<br /><em>to get hired</em></h2>
+        </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
-          <Card className="p-6">
-            <div className="flex gap-1 text-amber-500 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-current" />
-              ))}
-            </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 italic leading-relaxed">
-              "The ATS Job Matcher was the differentiator. I added Redis and Kubernetes to my resume where requested, and got a callback from Amazon the following week."
-            </p>
-            <p className="text-xs font-bold mt-4 text-zinc-900 dark:text-white">Alex Chen, DevOps Engineer</p>
-          </Card>
-          <Card className="p-6">
-            <div className="flex gap-1 text-amber-500 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-current" />
-              ))}
-            </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 italic leading-relaxed">
-              "Generating bullet points was simple. It expanded my brief descriptions into high-quality achievements with numbers."
-            </p>
-            <p className="text-xs font-bold mt-4 text-zinc-900 dark:text-white">Sarah Jenkins, Product Manager</p>
-          </Card>
-        </div>
-      </section>
-
-      {/* FAQs */}
-      <section className="py-20 px-6 max-w-3xl mx-auto space-y-12">
-        <h2 className="text-2xl font-bold text-center tracking-tight">Frequently Asked Questions</h2>
-        <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {faqItems.map((item, i) => (
-            <div key={i} className="py-4">
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full flex items-center justify-between font-semibold text-left text-sm py-2 hover:opacity-80 transition-opacity"
-              >
-                <span>{item.q}</span>
-                <ChevronDown
-                  className={cn("h-4 w-4 text-zinc-400 transition-transform", {
-                    "rotate-180": openFaq === i,
-                  })}
-                />
-              </button>
-              {openFaq === i && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mt-2.5">
-                  {item.a}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2 font-bold text-sm">
-            <div className="h-6 w-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white">R</div>
-            <span>ResumeAI Pro</span>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="features-grid"
+        >
+          <div className="feat-card border border-black/5 dark:border-white/5 dark:bg-zinc-900">
+            <div className="feat-icon dark:bg-zinc-800 text-leaf">✦</div>
+            <div className="feat-title text-ink dark:text-cream">AI Document Generation</div>
+            <p className="feat-desc dark:text-ink-faint">Stream-generated career documents tailored to your resume context and job description — in real time.</p>
+            <Link href={user ? "/dashboard" : "/auth"} className="feat-link">Learn more →</Link>
           </div>
-          <p className="text-[11px] text-zinc-400">
-            © {new Date().getFullYear()} ResumeAI Pro. All rights reserved.
-          </p>
+          <div className="feat-card accent">
+            <div className="feat-icon dark:bg-zinc-800 text-gold">⏱</div>
+            <div className="feat-title">Version History</div>
+            <p className="feat-desc text-white/70">Every draft is snapshotted. Restore any version from a clean side-panel with a single click.</p>
+            <Link href={user ? "/dashboard" : "/auth"} className="feat-link">Learn more →</Link>
+          </div>
+          <div className="feat-card border border-black/5 dark:border-white/5 dark:bg-zinc-900">
+            <div className="feat-icon dark:bg-zinc-800 text-leaf">🔗</div>
+            <div className="feat-title text-ink dark:text-cream">Secure Sharing Links</div>
+            <p className="feat-desc dark:text-ink-faint">Share documents via password-protected links with configurable print and download permissions.</p>
+            <Link href={user ? "/dashboard" : "/auth"} className="feat-link">Learn more →</Link>
+          </div>
+          <div className="feat-card border border-black/5 dark:border-white/5 dark:bg-zinc-900">
+            <div className="feat-icon dark:bg-zinc-800 text-leaf">📁</div>
+            <div className="feat-title text-ink dark:text-cream">Folder Organization</div>
+            <p className="feat-desc dark:text-ink-faint">Color-coded folders, tag filters, and full-text search keep your document workspace tidy.</p>
+            <Link href={user ? "/dashboard" : "/auth"} className="feat-link">Learn more →</Link>
+          </div>
+          <div className="feat-card border border-black/5 dark:border-white/5 dark:bg-zinc-900">
+            <div className="feat-icon dark:bg-zinc-800 text-leaf">🛡</div>
+            <div className="feat-title text-ink dark:text-cream">Row-Level Security</div>
+            <p className="feat-desc dark:text-ink-faint">Your data is private by design — Supabase RLS ensures only you can access your documents.</p>
+            <Link href={user ? "/dashboard" : "/auth"} className="feat-link">Learn more →</Link>
+          </div>
+          <div className="feat-card border border-black/5 dark:border-white/5 dark:bg-zinc-900">
+            <div className="feat-icon dark:bg-zinc-800 text-leaf">📊</div>
+            <div className="feat-title text-ink dark:text-cream">Usage Insights</div>
+            <p className="feat-desc dark:text-ink-faint">Track your daily generation quota and upgrade seamlessly when you need unlimited access.</p>
+            <Link href={user ? "/dashboard" : "/auth"} className="feat-link">Learn more →</Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="how" id="how">
+        <div className="how-inner">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.7 }}
+          >
+            <div className="section-label">The process</div>
+            <h2 className="section-title">From intent<br /><em>to document</em></h2>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="steps"
+          >
+            <div className="step">
+              <div className="step-num">01</div>
+              <div className="step-title">Build your profile</div>
+              <p className="step-desc">Add your experience, education, projects, and skills once. AI reads it automatically.</p>
+              <div className="step-line"></div>
+            </div>
+            <div className="step">
+              <div className="step-num">02</div>
+              <div className="step-title">Choose a document</div>
+              <p className="step-desc">Pick from cover letters, SOPs, outreach emails, or proposals — with guided fields.</p>
+              <div className="step-line"></div>
+            </div>
+            <div className="step">
+              <div className="step-num">03</div>
+              <div className="step-title">Generate & refine</div>
+              <p className="step-desc">Watch AI stream the draft in real time. Adjust tone, length, and focus as needed.</p>
+              <div className="step-line"></div>
+            </div>
+            <div className="step">
+              <div className="step-num">04</div>
+              <div className="step-title">Share or export</div>
+              <p className="step-desc">Send a secure link, copy text, or download — ready for any application platform.</p>
+            </div>
+          </motion.div>
         </div>
+      </section>
+
+      {/* DOCUMENTS */}
+      <section className="documents" id="documents">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7 }}
+        >
+          <div className="section-label">Document types</div>
+          <h2 className="section-title text-ink dark:text-cream">Every word,<br /><em>perfectly placed</em></h2>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="docs-layout"
+        >
+          <div className="doc-list">
+            {docContents.map((doc, idx) => (
+              <div
+                key={idx}
+                onClick={() => handleTabChange(idx)}
+                className={cn(
+                  "doc-item border dark:bg-zinc-900/50",
+                  activeTab === idx 
+                    ? "active dark:bg-zinc-900 border-black/5 dark:border-white/5" 
+                    : "border-transparent"
+                )}
+              >
+                <div className="doc-icon text-lg dark:bg-zinc-800">{doc.icon}</div>
+                <div>
+                  <div className="doc-name text-ink dark:text-cream">{doc.title}</div>
+                  <div className="doc-hint dark:text-ink-faint">{doc.hint}</div>
+                </div>
+                <div className="doc-arrow">→</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="doc-preview border border-black/5 dark:border-white/5 dark:bg-zinc-900 min-h-[340px] flex flex-col justify-between">
+            <div>
+              <div className="doc-preview-header">
+                <div className="dot dot-r"></div>
+                <div className="dot dot-y"></div>
+                <div className="dot dot-g"></div>
+              </div>
+              <div className="doc-preview-lines min-h-[220px]">
+                {isTyping ? (
+                  <div className="space-y-4 animate-pulse pt-2">
+                    <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3"></div>
+                    <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-full"></div>
+                    <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-5/6"></div>
+                    <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-2/3"></div>
+                  </div>
+                ) : (
+                  <AnimatePresence mode="wait">
+                    <div className="space-y-3">
+                      {docContents[activeTab].previewLines.map((line, i) => (
+                        <motion.div
+                          key={`${activeTab}-${i}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.08, duration: 0.25 }}
+                          className={cn(
+                            line.isTitle 
+                              ? "text-sm font-semibold text-ink dark:text-cream border-b border-black/5 dark:border-white/5 pb-2 mb-3 font-serif" 
+                              : "text-xs text-ink-light dark:text-ink-faint leading-relaxed font-sans"
+                          )}
+                          style={{ width: line.width }}
+                        >
+                          {line.text}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </AnimatePresence>
+                )}
+              </div>
+            </div>
+            <div className="ai-badge border border-black/5 dark:border-white/5 dark:bg-zinc-800 text-white mt-4">
+              <span className="ai-dot animate-ping"></span>
+              {isTyping ? "AI writing…" : "AI Complete"}
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* PRICING */}
+      <section className="pricing" id="pricing">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7 }}
+        >
+          <div className="section-label">Simple pricing</div>
+          <h2 className="section-title text-ink dark:text-cream">Start free,<br /><em>scale when ready</em></h2>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="plans"
+        >
+          <div className="plan border border-black/5 dark:border-white/5 dark:bg-zinc-900 text-left">
+            <div className="plan-name text-leaf">Free</div>
+            <div className="plan-price text-ink dark:text-cream">$0</div>
+            <div className="plan-period">forever</div>
+            <ul className="plan-feats">
+              <li className="text-ink-light dark:text-ink-faint"><span className="check">✓</span> 3 documents per day</li>
+              <li className="text-ink-light dark:text-ink-faint"><span className="check">✓</span> All document types</li>
+              <li className="text-ink-light dark:text-ink-faint"><span className="check">✓</span> Version history (5 snapshots)</li>
+              <li className="text-ink-light dark:text-ink-faint"><span className="check">✓</span> Secure share links</li>
+            </ul>
+            <Link href={user ? "/dashboard" : "/auth"} className="plan-btn text-ink dark:text-cream border-cream-dark dark:border-zinc-800 hover:border-ink dark:hover:border-cream">
+              Get started free
+            </Link>
+          </div>
+          <div className="plan highlight text-left dark:bg-zinc-900 border border-black/5 dark:border-white/5">
+            <div className="plan-name">Pro</div>
+            <div className="plan-price">$9</div>
+            <div className="plan-period">per month</div>
+            <ul className="plan-feats">
+              <li><span className="check">✓</span> Unlimited documents</li>
+              <li><span className="check">✓</span> All document types</li>
+              <li><span className="check">✓</span> Unlimited version history</li>
+              <li><span className="check">✓</span> Password-protected links</li>
+              <li><span className="check">✓</span> Priority AI generation</li>
+            </ul>
+            <Link href={user ? "/dashboard" : "/auth"} className="plan-btn">
+              Upgrade to Pro
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="landing-footer border-t border-black/10 dark:border-white/10 max-w-7xl mx-auto">
+        <div className="footer-logo text-ink dark:text-cream">
+          <span className="nav-logo-dot w-2.5 h-2.5 rounded-full bg-leaf"></span>
+          ResumeAI Pro
+        </div>
+        <div className="footer-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="https://github.com/akshaysomani/ResumeAI-Pro" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="#">Contact</a>
+        </div>
+        <div className="footer-copy text-ink-faint">© 2026 Akshay Somani</div>
       </footer>
     </div>
   );
 }
+
