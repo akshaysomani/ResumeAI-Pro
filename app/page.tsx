@@ -93,19 +93,19 @@ export default function LandingPage() {
         </Link>
         <ul className="nav-links hidden md:flex items-center gap-8 list-none">
           <li>
-            <a href="#features" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
+            <Link href="/#features" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
               Features
-            </a>
+            </Link>
           </li>
           <li>
-            <a href="#documents" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
+            <Link href="/#documents" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
               Documents
-            </a>
+            </Link>
           </li>
           <li>
-            <a href="#pricing" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
+            <Link href="/#pricing" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
               Pricing
-            </a>
+            </Link>
           </li>
           <li>
             <Link href="/templates" className="text-sm font-sans font-normal text-ink-light hover:text-ink dark:text-ink-faint dark:hover:text-cream no-underline transition-colors duration-200">
@@ -466,10 +466,10 @@ export default function LandingPage() {
           ResumeAI Pro
         </div>
         <div className="footer-links">
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <a href="https://github.com/akshaysomani/ResumeAI-Pro" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <a href="#">Contact</a>
+          <Link href="/contact">Contact</Link>
         </div>
         <div className="footer-copy text-ink-faint">© 2026 Akshay Somani</div>
       </footer>
