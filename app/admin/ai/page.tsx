@@ -129,7 +129,7 @@ export default async function AdminAIPage() {
             {modelRes.rows.length === 0 ? (
               <p className="text-xs text-zinc-500 py-4 font-mono">No active model usage recorded.</p>
             ) : (
-              modelRes.rows.map((row) => (
+              modelRes.rows.map((row: any) => (
                 <div key={row.model} className="py-3 flex justify-between items-center text-xs">
                   <div>
                     <span className="font-semibold text-zinc-200">{row.model}</span>
@@ -149,7 +149,7 @@ export default async function AdminAIPage() {
             {typeRes.rows.length === 0 ? (
               <p className="text-xs text-zinc-500 py-4 font-mono">No categories queried yet.</p>
             ) : (
-              typeRes.rows.map((row) => (
+              typeRes.rows.map((row: any) => (
                 <div key={row.type} className="py-3 flex justify-between items-center text-xs">
                   <div>
                     <span className="font-semibold text-zinc-200 capitalize">{row.type.replace(/_/g, " ")}</span>
@@ -187,7 +187,7 @@ export default async function AdminAIPage() {
                   <td colSpan={6} className="p-6 text-center text-zinc-500">No telemetry log entries found.</td>
                 </tr>
               ) : (
-                logsRes.rows.map((row) => (
+                logsRes.rows.map((row: any) => (
                   <tr key={row.id} className="hover:bg-zinc-900/10 transition-colors">
                     <td className="p-4 pl-6 text-zinc-500 whitespace-nowrap">
                       {new Date(row.createdAt).toLocaleTimeString()}

@@ -115,7 +115,7 @@ export async function getInterviewSessionAction(
   `;
   const { rows: questionRows } = await db.query(questionsQuery, [sessionId]);
 
-  const questions = questionRows.map((q) => ({
+  const questions = questionRows.map((q: any) => ({
     id: q.id,
     sessionId: q.session_id,
     questionText: q.question_text,
@@ -177,7 +177,7 @@ export async function getInterviewHistoryAction(userId: string): Promise<Intervi
     ORDER BY created_at DESC
   `;
   const { rows } = await db.query(query, [userId]);
-  return rows.map((s) => ({
+  return rows.map((s: any) => ({
     id: s.id,
     userId: s.user_id,
     resumeId: s.resume_id,
@@ -351,7 +351,7 @@ export async function getGoalsAction(userId: string): Promise<CareerGoal[]> {
     ORDER BY created_at DESC
   `;
   const { rows } = await db.query(query, [userId]);
-  return rows.map((g) => ({
+  return rows.map((g: any) => ({
     id: g.id,
     userId: g.user_id,
     title: g.title,
@@ -440,7 +440,7 @@ export async function getRoadmapsAction(userId: string): Promise<CareerRoadmap[]
     ORDER BY created_at DESC
   `;
   const { rows } = await db.query(query, [userId]);
-  return rows.map((r) => ({
+  return rows.map((r: any) => ({
     id: r.id,
     userId: r.user_id,
     currentSkills: r.current_skills || [],
@@ -500,7 +500,7 @@ export async function getSalaryReportsAction(userId: string): Promise<SalaryRepo
     ORDER BY created_at DESC
   `;
   const { rows } = await db.query(query, [userId]);
-  return rows.map((s) => ({
+  return rows.map((s: any) => ({
     id: s.id,
     userId: s.user_id,
     role: s.role,
@@ -576,7 +576,7 @@ export async function getLearningPlansAction(userId: string): Promise<LearningPl
     ORDER BY created_at DESC
   `;
   const { rows } = await db.query(query, [userId]);
-  return rows.map((lp) => ({
+  return rows.map((lp: any) => ({
     id: lp.id,
     userId: lp.user_id,
     targetRole: lp.target_role,
@@ -628,7 +628,7 @@ export async function getCoachChatsAction(userId: string): Promise<CoachChat[]> 
     ORDER BY updated_at DESC
   `;
   const { rows } = await db.query(query, [userId]);
-  return rows.map((c) => ({
+  return rows.map((c: any) => ({
     id: c.id,
     userId: c.user_id,
     title: c.title,
@@ -673,7 +673,7 @@ export async function getCoachMessagesAction(chatId: string, userId: string): Pr
     ORDER BY created_at ASC
   `;
   const { rows } = await db.query(query, [chatId]);
-  return rows.map((m) => ({
+  return rows.map((m: any) => ({
     id: m.id,
     chatId: m.chat_id,
     role: m.role as "user" | "assistant",

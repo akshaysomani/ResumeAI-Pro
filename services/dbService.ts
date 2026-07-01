@@ -267,7 +267,7 @@ export async function queryResumes(options: {
   query += ` OFFSET $${values.length}`;
 
   const { rows } = await db.query(query, values);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     userId: row.user_id,
     title: row.title,
@@ -346,7 +346,7 @@ export async function savePersonalInformation(resumeId: string, info: Omit<Perso
 export async function getEducation(resumeId: string): Promise<Education[]> {
   const query = `SELECT * FROM public.education WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     school: row.school,
@@ -406,7 +406,7 @@ export async function saveEducation(resumeId: string, items: Omit<Education, "id
 export async function getExperience(resumeId: string): Promise<Experience[]> {
   const query = `SELECT * FROM public.experience WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     company: row.company,
@@ -466,7 +466,7 @@ export async function saveExperience(resumeId: string, items: Omit<Experience, "
 export async function getInternships(resumeId: string): Promise<Internship[]> {
   const query = `SELECT * FROM public.internships WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     company: row.company,
@@ -526,7 +526,7 @@ export async function saveInternships(resumeId: string, items: Omit<Internship, 
 export async function getProjects(resumeId: string): Promise<Project[]> {
   const query = `SELECT * FROM public.projects WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     title: row.title,
@@ -584,7 +584,7 @@ export async function saveProjects(resumeId: string, items: Omit<Project, "id" |
 export async function getSkills(resumeId: string): Promise<Skill[]> {
   const query = `SELECT * FROM public.skills WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     name: row.name,
@@ -636,7 +636,7 @@ export async function saveSkills(resumeId: string, items: Omit<Skill, "id" | "re
 export async function getCertifications(resumeId: string): Promise<Certification[]> {
   const query = `SELECT * FROM public.certifications WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     name: row.name,
@@ -692,7 +692,7 @@ export async function saveCertifications(resumeId: string, items: Omit<Certifica
 export async function getAchievements(resumeId: string): Promise<Achievement[]> {
   const query = `SELECT * FROM public.achievements WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     title: row.title,
@@ -728,7 +728,7 @@ export async function saveAchievements(resumeId: string, items: Omit<Achievement
 export async function getLanguages(resumeId: string): Promise<Language[]> {
   const query = `SELECT * FROM public.languages WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     name: row.name,
@@ -775,7 +775,7 @@ export async function saveLanguages(resumeId: string, items: Omit<Language, "id"
 export async function getInterests(resumeId: string): Promise<Interest[]> {
   const query = `SELECT * FROM public.interests WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     name: row.name,
@@ -810,7 +810,7 @@ export async function saveInterests(resumeId: string, items: Omit<Interest, "id"
 export async function getReferences(resumeId: string): Promise<Reference[]> {
   const query = `SELECT * FROM public.references WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     name: row.name,
@@ -855,7 +855,7 @@ export async function saveReferences(resumeId: string, items: Omit<Reference, "i
 export async function getPublications(resumeId: string): Promise<Publication[]> {
   const query = `SELECT * FROM public.publications WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     title: row.title,
@@ -902,7 +902,7 @@ export async function savePublications(resumeId: string, items: Omit<Publication
 export async function getAwards(resumeId: string): Promise<Award[]> {
   const query = `SELECT * FROM public.awards WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     title: row.title,
@@ -947,7 +947,7 @@ export async function saveAwards(resumeId: string, items: Omit<Award, "id" | "re
 export async function getVolunteerExperience(resumeId: string): Promise<VolunteerExperience[]> {
   const query = `SELECT * FROM public.volunteer_experience WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     organization: row.organization,
@@ -992,7 +992,7 @@ export async function saveVolunteerExperience(resumeId: string, items: Omit<Volu
 export async function getCustomSections(resumeId: string): Promise<CustomSection[]> {
   const query = `SELECT * FROM public.custom_sections WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     id: row.id,
     resumeId: row.resume_id,
     sectionTitle: row.section_title,

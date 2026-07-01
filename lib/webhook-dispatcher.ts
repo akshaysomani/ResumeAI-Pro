@@ -30,7 +30,7 @@ export async function dispatchWebhook(params: {
     const res = await db.query(query, queryParams);
 
     const endpoints = res.rows.filter(
-      (row) => row.events.includes(eventType) || row.events.includes("*")
+      (row: any) => row.events.includes(eventType) || row.events.includes("*")
     );
 
     if (endpoints.length === 0) {

@@ -19,7 +19,7 @@ async function getResumeContextText(resumeId: string): Promise<string> {
     const { rows: expRows } = await db.query(expQuery, [resumeId]);
     if (expRows.length > 0) {
       context += `Professional Experience:\n`;
-      expRows.forEach((e) => {
+      expRows.forEach((e: any) => {
         context += `- Role: ${e.role} at ${e.company} (${e.duration || ""})\n  Details: ${e.description || ""}\n  Achievements: ${e.achievements || ""}\n`;
       });
       context += `\n`;
@@ -29,7 +29,7 @@ async function getResumeContextText(resumeId: string): Promise<string> {
     const { rows: eduRows } = await db.query(eduQuery, [resumeId]);
     if (eduRows.length > 0) {
       context += `Education:\n`;
-      eduRows.forEach((ed) => {
+      eduRows.forEach((ed: any) => {
         context += `- Degree: ${ed.degree || ""} ${ed.major ? `in ${ed.major}` : ""} from ${ed.school} (${ed.duration || ""})\n  GPA: ${ed.gpa || ""}\n  Details: ${ed.description || ""}\n`;
       });
       context += `\n`;
@@ -39,7 +39,7 @@ async function getResumeContextText(resumeId: string): Promise<string> {
     const { rows: projRows } = await db.query(projQuery, [resumeId]);
     if (projRows.length > 0) {
       context += `Projects:\n`;
-      projRows.forEach((pr) => {
+      projRows.forEach((pr: any) => {
         context += `- Title: ${pr.title} (Role: ${pr.role || ""})\n  Technologies: ${pr.technologies || ""}\n  Description: ${pr.description || ""}\n`;
       });
       context += `\n`;
@@ -48,7 +48,7 @@ async function getResumeContextText(resumeId: string): Promise<string> {
     const skillsQuery = `SELECT * FROM public.skills WHERE resume_id = $1 ORDER BY order_index ASC`;
     const { rows: skillsRows } = await db.query(skillsQuery, [resumeId]);
     if (skillsRows.length > 0) {
-      const skillList = skillsRows.map((s) => `${s.name}${s.proficiency ? ` (${s.proficiency})` : ""}`).join(", ");
+      const skillList = skillsRows.map((s: any) => `${s.name}${s.proficiency ? ` (${s.proficiency})` : ""}`).join(", ");
       context += `Skills: ${skillList}\n\n`;
     }
   } catch (err) {
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     // Fetch existing questions to avoid duplication
     const prevQQuery = `SELECT question_text FROM public.interview_questions WHERE session_id = $1 ORDER BY created_at ASC`;
     const { rows: prevQRows } = await db.query(prevQQuery, [sessionId]);
-    const currentQuestionsText = prevQRows.map((q, idx) => `Q${idx+1}: ${q.question_text}`).join("\n");
+    const currentQuestionsText = prevQRows.map((q: any, idx: number) => `Q${idx+1}: ${q.question_text}`).join("\n");
 
     let resumeContext = "";
     if (session.resume_id) {

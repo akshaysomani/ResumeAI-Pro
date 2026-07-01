@@ -19,7 +19,7 @@ async function getResumeContextText(userId: string): Promise<string> {
     const skillsQuery = `SELECT name FROM public.skills WHERE resume_id = $1 ORDER BY order_index ASC`;
     const { rows: skillsRows } = await db.query(skillsQuery, [resumeId]);
     if (skillsRows.length > 0) {
-      context += `Skills: ${skillsRows.map((s) => s.name).join(", ")}\n`;
+      context += `Skills: ${skillsRows.map((s: any) => s.name).join(", ")}\n`;
     }
   } catch (err) {}
   return context;

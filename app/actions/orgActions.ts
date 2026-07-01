@@ -152,7 +152,7 @@ export async function getOrganizationsAction(userId: string): Promise<Organizati
     ORDER BY o.created_at DESC
   `;
   const { rows } = await db.query(query, [userId]);
-  return rows.map((r) => ({
+  return rows.map((r: any) => ({
     id: r.id,
     name: r.name,
     logoUrl: r.logo_url,
@@ -298,7 +298,7 @@ export async function getOrgMembersAction(orgId: string): Promise<OrgMember[]> {
 export async function getOrgInvitationsAction(orgId: string): Promise<OrgInvitation[]> {
   const query = `SELECT * FROM public.organization_invitations WHERE organization_id = $1 AND status = 'pending' ORDER BY created_at DESC`;
   const { rows } = await db.query(query, [orgId]);
-  return rows.map((r) => ({
+  return rows.map((r: any) => ({
     id: r.id,
     organizationId: r.organization_id,
     email: r.email,
@@ -317,7 +317,7 @@ export async function getOrgInvitationsAction(orgId: string): Promise<OrgInvitat
 export async function getOrgWorkspacesAction(orgId: string): Promise<Workspace[]> {
   const query = `SELECT * FROM public.workspaces WHERE organization_id = $1 ORDER BY created_at ASC`;
   const { rows } = await db.query(query, [orgId]);
-  return rows.map((r) => ({
+  return rows.map((r: any) => ({
     id: r.id,
     organizationId: r.organization_id,
     name: r.name,
@@ -374,7 +374,7 @@ export async function getWorkspaceActivityLogsAction(workspaceId: string): Promi
     LIMIT 30
   `;
   const { rows } = await db.query(query, [workspaceId]);
-  return rows.map((r) => ({
+  return rows.map((r: any) => ({
     id: r.id,
     workspaceId: r.workspace_id,
     userId: r.user_id,
@@ -397,7 +397,7 @@ export async function getDocumentCommentsAction(documentType: string, documentId
     ORDER BY dc.created_at ASC
   `;
   const { rows } = await db.query(query, [documentType, documentId]);
-  return rows.map((r) => ({
+  return rows.map((r: any) => ({
     id: r.id,
     documentType: r.document_type as any,
     documentId: r.document_id,
@@ -545,7 +545,7 @@ export async function getWorkspacePresenceAction(workspaceId: string): Promise<U
     WHERE up.workspace_id = $1 AND up.last_seen_at >= NOW() - INTERVAL '30 seconds'
   `;
   const { rows } = await db.query(query, [workspaceId]);
-  return rows.map((r) => ({
+  return rows.map((r: any) => ({
     workspaceId: r.workspace_id,
     userId: r.user_id,
     lastSeenAt: r.last_seen_at,

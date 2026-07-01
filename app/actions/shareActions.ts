@@ -302,7 +302,7 @@ export async function getShareAnalyticsDataAction(resumeId: string) {
     let totalDownloads = 0;
     let totalScans = 0;
     
-    actionsRows.forEach((r) => {
+    actionsRows.forEach((r: any) => {
       if (r.action_type === "download") totalDownloads = parseInt(r.count, 10);
       if (r.action_type === "qr_scan") totalScans = parseInt(r.count, 10);
     });
@@ -347,10 +347,10 @@ export async function getShareAnalyticsDataAction(resumeId: string) {
       totalViews: viewCount,
       totalDownloads,
       totalScans,
-      devices: devices.map((d) => ({ name: d.name, value: parseInt(d.value, 10) })),
-      browsers: browsers.map((b) => ({ name: b.name, value: parseInt(b.value, 10) })),
-      countries: countries.map((c) => ({ name: c.name, value: parseInt(c.value, 10) })),
-      referrers: referrers.map((r) => ({ name: r.name, value: parseInt(r.value, 10) })),
+      devices: devices.map((d: any) => ({ name: d.name, value: parseInt(d.value, 10) })),
+      browsers: browsers.map((b: any) => ({ name: b.name, value: parseInt(b.value, 10) })),
+      countries: countries.map((c: any) => ({ name: c.name, value: parseInt(c.value, 10) })),
+      referrers: referrers.map((r: any) => ({ name: r.name, value: parseInt(r.value, 10) })),
     };
   } catch (error) {
     console.error("Error fetching analytics data:", error);

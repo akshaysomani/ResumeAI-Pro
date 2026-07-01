@@ -784,7 +784,7 @@ export async function getApiAnalyticsAction(userId: string): Promise<ApiUsageSta
       LIMIT 5
     `;
     const endpointsRes = await db.query(endpointsQuery, [userId]);
-    const topEndpoints = endpointsRes.rows.map((row) => ({
+    const topEndpoints = endpointsRes.rows.map((row: any) => ({
       endpoint: row.endpoint,
       count: parseInt(row.count, 10),
     }));
@@ -799,7 +799,7 @@ export async function getApiAnalyticsAction(userId: string): Promise<ApiUsageSta
       ORDER BY DATE(l.created_at) ASC
     `;
     const dailyRes = await db.query(dailyQuery, [userId]);
-    const requestsByDay = dailyRes.rows.map((row) => ({
+    const requestsByDay = dailyRes.rows.map((row: any) => ({
       date: new Date(row.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       count: parseInt(row.count, 10),
     }));

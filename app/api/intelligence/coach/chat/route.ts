@@ -23,7 +23,7 @@ async function getResumeContextText(userId: string): Promise<string> {
     const { rows: expRows } = await db.query(expQuery, [resumeId]);
     if (expRows.length > 0) {
       context += `Experience:\n`;
-      expRows.forEach((e) => {
+      expRows.forEach((e: any) => {
         context += `- Role: ${e.role} at ${e.company}. Details: ${e.description || ""}\n`;
       });
       context += `\n`;
@@ -31,7 +31,7 @@ async function getResumeContextText(userId: string): Promise<string> {
     const skillsQuery = `SELECT name FROM public.skills WHERE resume_id = $1 ORDER BY order_index ASC`;
     const { rows: skillsRows } = await db.query(skillsQuery, [resumeId]);
     if (skillsRows.length > 0) {
-      context += `Skills: ${skillsRows.map((s) => s.name).join(", ")}\n\n`;
+      context += `Skills: ${skillsRows.map((s: any) => s.name).join(", ")}\n\n`;
     }
   } catch (err) {
     console.error("Error gathering resume context for coach:", err);
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     `;
     const { rows: historyRows } = await db.query(historyQuery, [chatId]);
     const chatHistoryText = historyRows
-      .map((m) => `${m.role === "user" ? "Candidate" : "Coach"}: ${m.content}`)
+      .map((m: any) => `${m.role === "user" ? "Candidate" : "Coach"}: ${m.content}`)
       .join("\n");
 
     // Fetch candidate resume background context
