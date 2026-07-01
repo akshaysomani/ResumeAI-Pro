@@ -47,7 +47,7 @@ export function enqueueSyncTransaction(
   const queue = getSyncQueue();
   
   // To avoid duplicate transactions for the same resume save, we can merge or replace
-  let updatedQueue = [...queue];
+  const updatedQueue = [...queue];
   if (actionType === "saveResume") {
     // If there is already a saveResume transaction for the same resume id, update its payload
     const existingIndex = queue.findIndex(

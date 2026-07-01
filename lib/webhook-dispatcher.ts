@@ -20,7 +20,7 @@ export async function dispatchWebhook(params: {
 
   try {
     // Find all active endpoints for user or organization that list this eventType or '*'
-    let query = `
+    const query = `
       SELECT id, url, signing_secret, events 
       FROM public.webhook_endpoints 
       WHERE is_active = TRUE 

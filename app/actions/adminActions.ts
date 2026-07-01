@@ -557,10 +557,10 @@ export async function getAdminDashboardStatsAction(): Promise<{
     arr,
     openTickets: parseInt(openTicketsRes.rows[0]?.count || "0", 10),
     pendingReports: parseInt(pendingReportsRes.rows[0]?.count || "0", 10),
-    registrationsChart: registrationsRes.rows.map(r => ({ date: r.date, count: parseInt(r.count, 10) })),
-    resumesChart: resumesRes.rows.map(r => ({ date: r.date, count: parseInt(r.count, 10) })),
-    aiTokensChart: aiTokensRes.rows.map(r => ({ date: r.date, count: parseInt(r.count || "0", 10) })),
-    planDistribution: planDistRes.rows.map(r => ({ name: r.name, count: parseInt(r.count, 10) }))
+    registrationsChart: registrationsRes.rows.map((r: any) => ({ date: r.date, count: parseInt(r.count, 10) })),
+    resumesChart: resumesRes.rows.map((r: any) => ({ date: r.date, count: parseInt(r.count, 10) })),
+    aiTokensChart: aiTokensRes.rows.map((r: any) => ({ date: r.date, count: parseInt(r.count || "0", 10) })),
+    planDistribution: planDistRes.rows.map((r: any) => ({ name: r.name, count: parseInt(r.count, 10) }))
   };
 }
 

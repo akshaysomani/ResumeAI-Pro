@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
-// @ts-ignore: Node.js native --experimental-strip-types requires explicit .ts extension
+// @ts-expect-error: Node.js native --experimental-strip-types requires explicit .ts extension
 import { db } from "../lib/db.ts";
 
 test("Database Integration & CRUD Queries", async (t) => {

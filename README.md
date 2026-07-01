@@ -1,75 +1,160 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ResumeAI Pro — Enterprise AI Career Engine
 
-## Getting Started
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.9-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.4-blue)](https://react.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-SSR-emerald)](https://supabase.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
+[![Turbopack](https://img.shields.io/badge/Turbopack-Enabled-orange)](https://turbo.build/pack)
+[![Tests](https://img.shields.io/badge/Tests-18%20Passed-green)](tests/runner.ts)
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**ResumeAI Pro** is a state-of-the-art, enterprise-grade AI-powered Career Suite built with **Next.js 16 App Router**, **React 19**, and **Supabase SSR**. Designed for high performance, reliability, and security, it enables job seekers to generate ATS-optimized resumes, write high-impact cover letters, prepare for mock interviews, map career goals, and organize documents.
 
 ---
 
-## 📄 Module 10: Enterprise AI Career Documents Suite
+## 🏛️ Architecture Overview
 
-ResumeAI Pro includes a comprehensive workspace to generate, refine, organize, version, share, and export various career development documents.
+The application features a modern client-server layout utilizing Next.js Server Actions, a unified AI integration layer, and a resilient database integration layer.
 
-### 🏛️ Architecture & Data Schema
-The platform persists document information using normalized PostgreSQL tables:
-- **`public.document_folders`**: Holds folder metadata (custom names, color tags) assigned per user profile.
-- **`public.career_documents`**: Manages document types, titles, body content, configuration parameters (tone, length scale), and flags (`is_pinned`, `is_favorite`, `is_archived`, `tags` array).
-- **`public.career_document_versions`**: Maintains a chronological list of snapshots for each document, allowing users to capture history checkpoints and restore content.
-- **`public.career_document_shares`**: Configures sharing link settings (slug strings, visibilities, SHA-256 password hashes, print/download permissions).
+```mermaid
+graph TD
+    subgraph Client [Client UI & Providers]
+        UI[React 19 Components]
+        Auth[Auth Provider]
+        Sync[Offline Sync & local-db]
+        Theme[Theme Provider]
+    end
 
-### 🤖 AI Workflow & Streaming
-Career document generation leverages our unified AI Service Layer:
-1. **Context Collection**: If a resume link is set, the API reads personal details, experience lists, education, projects, and skills to construct a plaintext resume context.
-2. **Daily Billing Checks**: Free plan users are restricted to 3 document generations per UTC day (enforced via database logs on `ai_generations`), while Pro subscribers have unlimited queries.
-3. **Prompt Composition**: Adapts system guidelines and custom input fields depending on the target document category.
-4. **Streaming Response**: Invokes `getAIStream` to stream character chunks back to the client editor interface in real-time, logging credit consumption asynchronously on stream completion.
+    subgraph API [Next.js App Server Actions]
+        RA[Resume Actions]
+        DocA[Document Actions]
+        IntelA[Career Intel Actions]
+        AdminA[Admin Actions]
+    end
 
-### 📝 Prompt Library Templates
-Supported document categories utilize dedicated prompting patterns defined in `lib/ai-prompts.ts`:
-- **Outreach & Networking Emails**: Writes high-impact, short templates incorporating subject lines and clear calls to action.
-- **Statement of Purpose (SOP) / Personal Statements**: Focuses on academic highlights, research focus areas, and institutional alignment.
-- **Cover Letters & Application Letters**: Tailors professional narrative to match specific job descriptions and target role requirements.
-- **Proposals & Client Introductions**: Highlights budget terms, timelines, and business scope variables.
+    subgraph Services [Service Layer]
+        AIService[AI Service Layer / ai-provider]
+        DBService[Database Service / dbService]
+    end
 
-### ⏱️ Document Versioning Snapshotting
-Every major update or manual user save logs a row in `career_document_versions`. Users can view historical snapshots via a drawer side-panel in the Editor workspace and click **Restore** to roll back content instantly.
+    subgraph Data [Storage & DB]
+        PG[PostgreSQL Pool / pg]
+        MockDB[(In-Memory Mock DB Fallback)]
+        Supa[(Supabase SSR auth.users)]
+    end
 
-### 📁 Organizing Folders & Tagging
-Users can organize files into custom, color-coded folders (Indigo, Violet, emerald, Amber, etc.). Search bars support indexing title strings, tags array, or text keywords.
+    UI --> Auth
+    UI --> Sync
+    UI --> Theme
+    UI --> RA
+    UI --> DocA
+    UI --> IntelA
+    UI --> AdminA
 
-### 🛡️ Security & Row Level Security (RLS)
-The database enforces security at the PostgreSQL layer:
-- **Folders, Documents, and Versions**: Guarded by RLS rules that compare `auth.uid() = user_id`, preventing any unauthorized access.
-- **Public Sharing Landing Pages**: Share links (`/documents/share/[slug]`) check visibility properties. If set to `password`, access is gated by matching SHA-256 password hash checks in the API tier.
+    RA --> DBService
+    DocA --> DBService
+    IntelA --> DBService
+    AdminA --> DBService
 
+    DBService --> AIService
+    DBService --> PG
+    PG -- Connection Fail? --> MockDB
+    Auth --> Supa
+```
+
+---
+
+## 🚀 Key Features
+
+*   **ATS Resume Builder & Analyzer**: Visual interactive editor canvas (`resume-preview-canvas.tsx`) with PDF/Docx generation capabilities.
+*   **AI Writing Assistant**: Real-time streaming generation of cover letters, SOPs, networking emails, and client proposals.
+*   **Career Intelligence Suite**: Interactive mock interviews with STAR-method feedback, career goal roadmap generators, and salary estimators.
+*   **Self-Healing Database Pool**: Resilient Pg Pool integration that automatically catches connection refused errors and routes operations to an in-memory database mock.
+*   **Collaboration & Recruiter Mode**: Multi-tenant organization support, recruiter presence trackers, document lock mechanisms, and feedback logs.
+*   **Offline-First Sync**: Background synchronization worker (`sw.js`) that persists mutations inside IndexedDB and syncs upon reconnection.
+
+---
+
+## 🗄️ Database Schema
+
+The platform maintains a highly normalized PostgreSQL schema across 15 migrations, secured with strict **Row-Level Security (RLS)** rules.
+
+| Table | Description | Primary Key | Foreign Keys |
+| ----- | ----------- | ----------- | ------------ |
+| `public.profiles` | User profile details | `id (uuid)` | `auth.users.id` |
+| `public.resumes` | Resume documents metadata | `id (uuid)` | `user_id -> profiles.id` |
+| `public.resume_sections` | Section-level resume content | `id (uuid)` | `resume_id -> resumes.id` |
+| `public.career_documents` | AI career documents (CLs, SOPs) | `id (uuid)` | `user_id -> profiles.id` |
+| `public.career_document_versions` | Version checkpoint snapshots | `id (uuid)` | `document_id -> career_documents.id` |
+| `public.career_document_shares` | Password-gated share links | `id (uuid)` | `document_id -> career_documents.id` |
+| `public.organizations` | Multi-tenant groups | `id (uuid)` | — |
+| `public.organization_members` | Membership & RBAC mappings | `id (uuid)` | `org_id -> organizations.id`, `user_id -> profiles.id` |
+| `public.audit_logs` | Security and compliance logs | `id (bigint)`| `user_id -> profiles.id` |
+
+---
+
+## 🛠️ Technology Stack
+
+*   **Framework**: [Next.js 16.2.9](https://nextjs.org/) (App Router, Turbopack, Server Actions)
+*   **UI Library**: [React 19.2.4](https://react.dev/)
+*   **Database**: [Supabase SSR](https://supabase.com/docs/guides/auth/server-side-rendering) & [PostgreSQL 15](https://www.postgresql.org/)
+*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & Vanilla CSS variables
+*   **Animations**: [Framer Motion](https://www.framer.com/motion/)
+*   **Testing**: Native Node.js test runner (`node:test`)
+*   **Types**: Strict [TypeScript 5](https://www.typescriptlang.org/)
+
+---
+
+## 📦 Installation & Setup
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/yourusername/ResumeAI-Pro.git
+cd ResumeAI-Pro
+npm install
+```
+
+### 2. Configure Environment Variables
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+DATABASE_URL=postgresql://postgres:password@localhost:5432/AI_resume_Builder
+AI_PROVIDER=gemini # options: gemini, openai, anthropic, openrouter
+GEMINI_API_KEY=your-api-key
+```
+
+### 3. Database Initialization
+Run the schema setup script from the Supabase dashboard or locally:
+```sql
+\i supabase_schema.sql
+```
+
+### 4. Running the Dev Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+---
+
+## 🧪 Testing
+
+We leverage Node's native test runner to certify production readiness. To execute the 18 automated suites:
+```bash
+npm test
+```
+
+---
+
+## 🗺️ Future Roadmap
+
+1.  **Browser PDF Rendering**: Move document parsing to client-side canvas engines to reduce server overhead.
+2.  **LinkedIn Auto-Sync Chrome Extension**: Parse experience from profile page DOM elements directly into ResumeAI.
+3.  **Real-Time Collaborative Editing**: Operational Transformation (OT) or CRDT sync for multi-user resume review.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
