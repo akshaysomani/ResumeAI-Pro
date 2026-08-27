@@ -307,9 +307,11 @@ export async function getPersonalInformation(resumeId: string): Promise<Personal
     phone: row.phone,
     location: row.location,
     website: row.website,
-    linkedinUrl: row.linkedin_url,
-    githubUrl: row.github_url,
-    portfolioUrl: row.portfolio_url,
+    linkedinUrl: row.linkedin_url || "",
+    githubUrl: row.github_url || "",
+    portfolioUrl: row.portfolio_url || "",
+    github: row.github_url || "",
+    linkedin: row.linkedin_url || "",
   };
 }
 
@@ -335,8 +337,8 @@ export async function savePersonalInformation(resumeId: string, info: Omit<Perso
     info.phone || null,
     info.location || null,
     info.website || null,
-    info.linkedinUrl || null,
-    info.githubUrl || null,
+    info.linkedinUrl || info.linkedin || null,
+    info.githubUrl || info.github || null,
     info.portfolioUrl || null,
   ];
   await db.query(query, values);

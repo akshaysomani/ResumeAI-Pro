@@ -36,7 +36,6 @@ export function ResumePreviewCanvas({
   resume,
   zoom,
   previewTemplateId = null,
-  showWatermark = false,
 }: ResumePreviewCanvasProps) {
   // 1. Fetch active template config and merge with user overrides
   const activeTemplateId = previewTemplateId || resume.templateId || "modern";
@@ -99,6 +98,13 @@ export function ResumePreviewCanvas({
 
   const headingSizeClass = mergedConfig.fontSize === "sm" ? "text-xs" :
                            mergedConfig.fontSize === "lg" ? "text-base" : "text-sm"; 
+
+  // Helpers to format URL
+  const formatUrl = (url?: string) => {
+    if (!url || !url.trim()) return "";
+    const trimmed = url.trim();
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  };
 
   // Helpers to fetch section data
   const getSection = (type: string) => resume.sections.find((s) => s.sectionType === type);
@@ -169,7 +175,7 @@ export function ResumePreviewCanvas({
     );
 
     return (
-      <div className="space-y-1 mb-2 mt-4 break-inside-avoid text-left">
+      <div className="resume-section-header space-y-1 mb-2 mt-4 break-inside-avoid break-after-avoid text-left">
         <h3 className={cn("font-bold tracking-wide uppercase flex items-center gap-2", headingSizeClass)} style={{ color: primaryColor }}>
           {iconWrapper}
           <span>{title}</span>
@@ -222,17 +228,23 @@ export function ResumePreviewCanvas({
     const avatar = renderAvatar();
     const style = mergedConfig.headerStyle;
 
-    // Contact metadata nodes
+    const github = personal.githubUrl || personal.github;
+    const linkedin = personal.linkedinUrl || personal.linkedin;
+    const website = personal.website || personal.personalWebsite;
+
+    // Contact metadata nodes with clickable ATS links
     const contactNodes = (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
         {personal.email && (
           <span className="flex items-center gap-1">
-            <Mail className="h-3 w-3 shrink-0" /> {personal.email}
+            <Mail className="h-3 w-3 shrink-0" />
+            <a href={`mailto:${personal.email}`} className="hover:underline">{personal.email}</a>
           </span>
         )}
         {personal.phone && (
           <span className="flex items-center gap-1">
-            <Phone className="h-3 w-3 shrink-0" /> {personal.phone}
+            <Phone className="h-3 w-3 shrink-0" />
+            <a href={`tel:${personal.phone}`} className="hover:underline">{personal.phone}</a>
           </span>
         )}
         {personal.location && (
@@ -240,20 +252,22 @@ export function ResumePreviewCanvas({
             <MapPin className="h-3 w-3 shrink-0" /> {personal.location}
           </span>
         )}
-        {personal.website && (
+        {website && (
           <span className="flex items-center gap-1">
             <Globe className="h-3 w-3 shrink-0" />
-            <a href={personal.website} className="hover:underline">{personal.website}</a>
+            <a href={formatUrl(website)} target="_blank" rel="noreferrer" className="hover:underline font-medium">Portfolio</a>
           </span>
         )}
-        {personal.linkedinUrl && (
+        {github && (
           <span className="flex items-center gap-1">
-            <LinkIcon className="h-3 w-3 shrink-0" /> LinkedIn
+            <LinkIcon className="h-3 w-3 shrink-0" />
+            <a href={formatUrl(github)} target="_blank" rel="noreferrer" className="hover:underline font-medium text-zinc-700 dark:text-zinc-200">GitHub</a>
           </span>
         )}
-        {personal.githubUrl && (
+        {linkedin && (
           <span className="flex items-center gap-1">
-            <LinkIcon className="h-3 w-3 shrink-0" /> GitHub
+            <LinkIcon className="h-3 w-3 shrink-0" />
+            <a href={formatUrl(linkedin)} target="_blank" rel="noreferrer" className="hover:underline font-medium text-zinc-700 dark:text-zinc-200">LinkedIn</a>
           </span>
         )}
       </div>
@@ -262,7 +276,7 @@ export function ResumePreviewCanvas({
     // Left Border Header style
     if (style === "left-border") {
       return (
-        <div className="flex items-start gap-4 pb-4 border-b border-zinc-150 dark:border-zinc-800/80 mb-4 text-left">
+        <div className="resume-section flex items-start gap-4 pb-4 border-b border-zinc-150 dark:border-zinc-800/80 mb-4 text-left break-inside-avoid">
           {avatar}
           <div className="border-l-4 pl-4 flex-1 space-y-1.5" style={{ borderColor: primaryColor }}>
             <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: primaryColor }}>
@@ -282,7 +296,7 @@ export function ResumePreviewCanvas({
     // Centered Minimal header
     if (style === "minimal" || mergedConfig.photoPosition === "center") {
       return (
-        <div className="flex flex-col items-center text-center pb-4 border-b border-zinc-150 dark:border-zinc-800/80 mb-4 space-y-2">
+        <div className="resume-section flex flex-col items-center text-center pb-4 border-b border-zinc-150 dark:border-zinc-800/80 mb-4 space-y-2 break-inside-avoid">
           {avatar}
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: primaryColor }}>
@@ -304,7 +318,7 @@ export function ResumePreviewCanvas({
     // Split Header: profile picture / text on left, contact nodes on right
     if (style === "split") {
       return (
-        <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-4 pb-4 border-b border-zinc-150 dark:border-zinc-800/80 mb-4 text-left">
+        <div className="resume-section flex flex-col sm:flex-row justify-between items-center sm:items-start gap-4 pb-4 border-b border-zinc-150 dark:border-zinc-800/80 mb-4 text-left break-inside-avoid">
           <div className="flex items-center gap-4">
             {mergedConfig.photoPosition === "left" && avatar}
             <div>
@@ -319,13 +333,26 @@ export function ResumePreviewCanvas({
             </div>
             {mergedConfig.photoPosition === "right" && avatar}
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0 text-right sm:max-w-[40%]">
-            {personal.email && <span className="text-[11px] text-zinc-500">{personal.email}</span>}
-            {personal.phone && <span className="text-[11px] text-zinc-500">{personal.phone}</span>}
-            {personal.location && <span className="text-[11px] text-zinc-500">{personal.location}</span>}
-            {personal.website && (
-              <a href={personal.website} className="text-[11px] text-indigo-500 hover:underline">{personal.website}</a>
+          <div className="flex flex-col items-end gap-1 shrink-0 text-right sm:max-w-[45%]">
+            {personal.email && (
+              <a href={`mailto:${personal.email}`} className="text-[11px] text-zinc-500 hover:underline">{personal.email}</a>
             )}
+            {personal.phone && (
+              <a href={`tel:${personal.phone}`} className="text-[11px] text-zinc-500 hover:underline">{personal.phone}</a>
+            )}
+            {personal.location && <span className="text-[11px] text-zinc-500">{personal.location}</span>}
+            {website && (
+              <a href={formatUrl(website)} target="_blank" rel="noreferrer" className="text-[11px] text-indigo-500 hover:underline font-medium">Portfolio</a>
+            )}
+            <div className="flex flex-wrap justify-end items-center gap-2 text-[11px] mt-0.5">
+              {github && (
+                <a href={formatUrl(github)} target="_blank" rel="noreferrer" className="text-zinc-700 dark:text-zinc-300 hover:underline font-medium">GitHub</a>
+              )}
+              {github && linkedin && <span className="text-zinc-300 dark:text-zinc-600">|</span>}
+              {linkedin && (
+                <a href={formatUrl(linkedin)} target="_blank" rel="noreferrer" className="text-zinc-700 dark:text-zinc-300 hover:underline font-medium">LinkedIn</a>
+              )}
+            </div>
           </div>
         </div>
       );
@@ -334,7 +361,7 @@ export function ResumePreviewCanvas({
     // Colored Top Banner Header Style
     if (style === "banner") {
       return (
-        <div className="relative -mx-6 -mt-6 mb-6 overflow-hidden">
+        <div className="resume-section relative -mx-6 -mt-6 mb-6 overflow-hidden break-inside-avoid">
           <div 
             className="p-6 text-white flex flex-col sm:flex-row justify-between items-center gap-4 text-left"
             style={{ backgroundColor: primaryColor }}
@@ -351,15 +378,15 @@ export function ResumePreviewCanvas({
               </div>
             </div>
             <div className="flex flex-col items-end text-[11px] opacity-90 space-y-0.5 text-right shrink-0">
-              {personal.email && <span>{personal.email}</span>}
-              {personal.phone && <span>{personal.phone}</span>}
+              {personal.email && <a href={`mailto:${personal.email}`} className="hover:underline">{personal.email}</a>}
+              {personal.phone && <a href={`tel:${personal.phone}`} className="hover:underline">{personal.phone}</a>}
               {personal.location && <span>{personal.location}</span>}
             </div>
           </div>
-          <div className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-2 flex justify-center text-[10px] text-zinc-400">
-            {personal.website && <span className="mx-2">Website: {personal.website}</span>}
-            {personal.linkedinUrl && <span className="mx-2">LinkedIn: {personal.linkedinUrl}</span>}
-            {personal.githubUrl && <span className="mx-2">GitHub: {personal.githubUrl}</span>}
+          <div className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-2 flex flex-wrap justify-center text-[10px] text-zinc-600 dark:text-zinc-300 gap-x-4 gap-y-1">
+            {website && <a href={formatUrl(website)} target="_blank" rel="noreferrer" className="hover:underline font-medium">Portfolio</a>}
+            {github && <a href={formatUrl(github)} target="_blank" rel="noreferrer" className="hover:underline font-medium">GitHub</a>}
+            {linkedin && <a href={formatUrl(linkedin)} target="_blank" rel="noreferrer" className="hover:underline font-medium">LinkedIn</a>}
           </div>
         </div>
       );
@@ -367,7 +394,7 @@ export function ResumePreviewCanvas({
 
     // Default Compact format
     return (
-      <div className="pb-3 border-b border-zinc-150 dark:border-zinc-800/80 mb-3 text-left">
+      <div className="resume-section pb-3 border-b border-zinc-150 dark:border-zinc-800/80 mb-3 text-left break-inside-avoid">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold tracking-tight" style={{ color: primaryColor }}>
@@ -381,10 +408,19 @@ export function ResumePreviewCanvas({
           </div>
           {avatar}
         </div>
-        <div className="flex flex-wrap gap-2 text-[10px] text-zinc-500 mt-1">
-          {personal.email && <span>{personal.email}</span>}
-          {personal.phone && <span>• {personal.phone}</span>}
+        <div className="flex flex-wrap items-center gap-2 text-[10px] text-zinc-500 mt-1">
+          {personal.email && <a href={`mailto:${personal.email}`} className="hover:underline">{personal.email}</a>}
+          {personal.phone && <span>• <a href={`tel:${personal.phone}`} className="hover:underline">{personal.phone}</a></span>}
           {personal.location && <span>• {personal.location}</span>}
+          {website && (
+            <span>• <a href={formatUrl(website)} target="_blank" rel="noreferrer" className="hover:underline font-medium">Portfolio</a></span>
+          )}
+          {github && (
+            <span>• <a href={formatUrl(github)} target="_blank" rel="noreferrer" className="hover:underline font-medium text-zinc-700 dark:text-zinc-300">GitHub</a></span>
+          )}
+          {linkedin && (
+            <span>• <a href={formatUrl(linkedin)} target="_blank" rel="noreferrer" className="hover:underline font-medium text-zinc-700 dark:text-zinc-300">LinkedIn</a></span>
+          )}
         </div>
       </div>
     );
@@ -393,7 +429,7 @@ export function ResumePreviewCanvas({
   const renderSummary = () => {
     if (!isSummaryVisible) return null;
     return (
-      <div className="break-inside-avoid text-xs text-left leading-relaxed text-zinc-700 dark:text-zinc-300">
+      <div className="resume-section break-inside-avoid text-xs text-left leading-relaxed text-zinc-700 dark:text-zinc-300">
         <SectionHeader title="Professional Summary" icon={<Sparkles className="h-4 w-4" />} />
         <p className="opacity-95 leading-relaxed">{summary.text}</p>
       </div>
@@ -406,7 +442,7 @@ export function ResumePreviewCanvas({
     const drawTimeline = mergedConfig.timelineStyle !== "none";
 
     return (
-      <div className="space-y-2 text-left">
+      <div className="resume-section space-y-2 text-left break-inside-avoid">
         <SectionHeader title={title} icon={icon} />
         
         {drawTimeline ? (
@@ -419,7 +455,7 @@ export function ResumePreviewCanvas({
             }}
           >
             {items.map((item, idx) => (
-              <div key={item.id || idx} className="relative">
+              <div key={item.id || idx} className="resume-entry relative break-inside-avoid">
                 {/* Visual Timeline Dot Node */}
                 <div 
                   className="absolute -left-[21.5px] top-1.5 h-2.5 w-2.5 rounded-full border bg-white dark:bg-zinc-950 flex items-center justify-center shrink-0"
@@ -434,9 +470,9 @@ export function ResumePreviewCanvas({
         ) : (
           <div className="space-y-3.5">
             {items.map((item, idx) => (
-              <React.Fragment key={item.id || idx}>
+              <div key={item.id || idx} className="resume-entry break-inside-avoid">
                 {renderItem(item, idx)}
-              </React.Fragment>
+              </div>
             ))}
           </div>
         )}
@@ -557,11 +593,11 @@ export function ResumePreviewCanvas({
     // A. Standard text representation
     if (style === "text") {
       return (
-        <div className="break-inside-avoid text-left">
+        <div className="resume-section text-left space-y-1 break-inside-avoid">
           <SectionHeader title="Skills" icon={<Layers className="h-4 w-4" />} />
-          <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-700 dark:text-zinc-300">
             {skills.map((item: any, idx: number) => (
-              <span key={idx}>
+              <span key={idx} className="resume-entry break-inside-avoid">
                 {item.name} {item.proficiency ? `(${item.proficiency})` : ""}
                 {idx < skills.length - 1 && <span className="text-zinc-300 mx-1">•</span>}
               </span>
@@ -582,11 +618,11 @@ export function ResumePreviewCanvas({
       });
 
       return (
-        <div className="break-inside-avoid text-left space-y-2">
+        <div className="resume-section text-left space-y-1.5 break-inside-avoid">
           <SectionHeader title="Skills Categories" icon={<Layers className="h-4 w-4" />} />
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {Object.entries(groups).map(([cat, list]) => (
-              <div key={cat} className="text-xs">
+              <div key={cat} className="resume-entry text-xs break-inside-avoid">
                 <span className="font-bold text-[10px] uppercase text-zinc-400 tracking-wider block">{cat}</span>
                 <p className="text-zinc-700 dark:text-zinc-300 mt-0.5 leading-relaxed">
                   {list.join(", ")}
@@ -600,18 +636,38 @@ export function ResumePreviewCanvas({
 
     // C. Badges blocks
     if (style === "badges") {
+      const isSolid = mergedConfig.dividerStyle !== "none";
+      const borderStyleClass = mergedConfig.dividerStyle === "dashed" ? "border-dashed" : "border-solid";
+
       return (
-        <div className="break-inside-avoid text-left">
-          <SectionHeader title="Skills & Competencies" icon={<Layers className="h-4 w-4" />} />
-          <div className="flex flex-wrap gap-1.5">
+        <div className="resume-section text-left break-inside-avoid">
+          {/* Custom Skills-scoped Section Header */}
+          <div className="resume-section-header space-y-1.5 mb-3 mt-4 break-inside-avoid break-after-avoid text-left">
+            <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-[13px] md:text-sm" style={{ color: primaryColor }}>
+              <Layers className="h-4.5 w-4.5 shrink-0" />
+              <span>Skills & Competencies</span>
+            </div>
+            {isSolid && (
+              <div 
+                className={cn("border-t", borderStyleClass)} 
+                style={{ 
+                  borderColor: `${primaryColor}40`, 
+                  borderWidth: mergedConfig.dividerStyle === "bold" ? "2.5px" : "1px" 
+                }} 
+              />
+            )}
+          </div>
+
+          {/* Skill Chips container with custom spacing */}
+          <div className="flex flex-wrap gap-x-2.5 gap-y-2 mt-3 pt-0.5">
             {skills.map((item: any, idx: number) => (
               <span
                 key={idx}
-                className="text-[11px] border px-2 py-0.5 font-medium select-none text-zinc-800 dark:text-zinc-200"
+                className="inline-flex items-center text-[12px] font-semibold border px-3.5 py-1.5 select-none text-zinc-800 dark:text-zinc-200 leading-none transition-colors"
                 style={{ 
-                  borderRadius,
-                  backgroundColor: `${primaryColor}10`,
-                  borderColor: `${primaryColor}25`
+                  borderRadius: "9999px",
+                  backgroundColor: `${primaryColor}08`,
+                  borderColor: `${primaryColor}22`
                 }}
               >
                 {item.name} {item.proficiency ? `(${item.proficiency})` : ""}
@@ -638,14 +694,14 @@ export function ResumePreviewCanvas({
     // D. Progress Track Bars
     if (style === "progress") {
       return (
-        <div className="break-inside-avoid text-left space-y-2">
+        <div className="resume-section text-left space-y-1.5 break-inside-avoid">
           <SectionHeader title="Skills Index" icon={<Layers className="h-4 w-4" />} />
           <div className="grid gap-2 sm:grid-cols-2">
             {skills.map((item: any, idx: number) => {
               const rating = getRating(item.proficiency);
               const pct = rating * 20;
               return (
-                <div key={idx} className="space-y-0.5 text-xs">
+                <div key={idx} className="resume-entry space-y-0.5 text-xs break-inside-avoid">
                   <div className="flex justify-between text-[11px]">
                     <span className="font-semibold text-zinc-700 dark:text-zinc-300">{item.name}</span>
                     <span className="text-zinc-400 font-medium">{item.proficiency || `${pct}%`}</span>
@@ -667,13 +723,13 @@ export function ResumePreviewCanvas({
     // E. Stars or Dots Ratings
     const drawStars = style === "stars";
     return (
-      <div className="break-inside-avoid text-left space-y-2.5">
+      <div className="resume-section text-left space-y-1.5 break-inside-avoid">
         <SectionHeader title="Skills Strengths" icon={<Layers className="h-4 w-4" />} />
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-2.5 sm:grid-cols-2">
           {skills.map((item: any, idx: number) => {
             const rating = getRating(item.proficiency);
             return (
-              <div key={idx} className="flex justify-between items-center text-xs">
+              <div key={idx} className="resume-entry flex justify-between items-center text-xs break-inside-avoid">
                 <span className="font-semibold text-zinc-700 dark:text-zinc-300 truncate pr-2">{item.name}</span>
                 <div className="flex gap-0.5 shrink-0">
                   {Array.from({ length: 5 }).map((_, i) => {
@@ -709,11 +765,11 @@ export function ResumePreviewCanvas({
   const renderCertifications = () => {
     if (!isCertificationsVisible) return null;
     return (
-      <div className="space-y-2 text-left break-inside-avoid">
+      <div className="resume-section space-y-1.5 text-left break-inside-avoid">
         <SectionHeader title="Certifications" icon={<FileBadge className="h-4 w-4" />} />
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {certifications.map((item: any, idx: number) => (
-            <div key={item.id || idx} className="flex justify-between text-xs">
+            <div key={item.id || idx} className="resume-entry flex justify-between text-xs break-inside-avoid">
               <div>
                 <span className="font-bold text-zinc-800 dark:text-zinc-100">{item.name}</span>
                 {item.issuer && <span className="text-zinc-400"> by {item.issuer}</span>}
@@ -729,11 +785,11 @@ export function ResumePreviewCanvas({
   const renderLanguages = () => {
     if (!isLanguagesVisible) return null;
     return (
-      <div className="text-left break-inside-avoid">
+      <div className="resume-section text-left space-y-1 break-inside-avoid">
         <SectionHeader title="Languages" icon={<Globe className="h-4 w-4" />} />
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {languages.map((item: any, idx: number) => (
-            <span key={idx} className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            <span key={idx} className="resume-entry break-inside-avoid text-xs font-semibold text-zinc-700 dark:text-zinc-300">
               {item.name} {item.proficiency ? `(${item.proficiency})` : ""}
             </span>
           ))}
@@ -745,13 +801,19 @@ export function ResumePreviewCanvas({
   const renderAchievements = () => {
     if (!isAchievementsVisible) return null;
     return (
-      <div className="space-y-2 text-left break-inside-avoid">
+      <div className="resume-section space-y-1.5 text-left break-inside-avoid">
         <SectionHeader title="Achievements & Awards" icon={<Award className="h-4 w-4" />} />
-        <div className="space-y-2 text-xs">
+        <div className="space-y-1 text-xs">
           {achievements.map((item: any, idx: number) => (
-            <div key={item.id || idx} className="space-y-0.5">
-              <p className="font-bold text-zinc-800 dark:text-zinc-100">{item.title}</p>
-              {item.description && <p className="text-zinc-500 dark:text-zinc-400 text-[11px] leading-relaxed">{item.description}</p>}
+            <div key={item.id || idx} className="resume-entry break-inside-avoid text-xs">
+              {item.description ? (
+                <div>
+                  <span className="font-bold text-zinc-800 dark:text-zinc-100">{item.title}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 text-[11px] ml-1.5">— {item.description}</span>
+                </div>
+              ) : (
+                <p className="font-bold text-zinc-800 dark:text-zinc-100">{item.title}</p>
+              )}
             </div>
           ))}
         </div>
@@ -762,9 +824,9 @@ export function ResumePreviewCanvas({
   const renderCustom = () => {
     if (!isCustomVisible) return null;
     return (
-      <div className="space-y-3">
+      <div className="resume-section space-y-2 text-left break-inside-avoid">
         {custom.map((item: any, idx: number) => (
-          <div key={item.id || idx} className="text-left break-inside-avoid text-xs">
+          <div key={item.id || idx} className="resume-entry break-inside-avoid text-xs space-y-0.5">
             <SectionHeader title={item.sectionTitle || "Custom Section"} icon={<Bookmark className="h-4 w-4" />} />
             <p className="leading-relaxed opacity-95 text-[11px] whitespace-pre-line text-zinc-600 dark:text-zinc-400">
               {item.content}
@@ -804,11 +866,11 @@ export function ResumePreviewCanvas({
   const renderInterests = () => {
     if (!isInterestsVisible) return null;
     return (
-      <div className="break-inside-avoid text-left">
+      <div className="resume-section text-left space-y-1 break-inside-avoid">
         <SectionHeader title="Interests" icon={<Heart className="h-4 w-4" />} />
-        <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-700 dark:text-zinc-300">
           {interests.map((item: any, idx: number) => (
-            <span key={item.id || idx}>
+            <span key={item.id || idx} className="resume-entry break-inside-avoid">
               {item.name}
               {idx < interests.length - 1 && <span className="text-zinc-300 mx-1">•</span>}
             </span>
@@ -850,11 +912,11 @@ export function ResumePreviewCanvas({
   const renderReferences = () => {
     if (!isReferencesVisible) return null;
     return (
-      <div className="space-y-2 text-left break-inside-avoid">
+      <div className="resume-section space-y-1.5 text-left break-inside-avoid">
         <SectionHeader title="References" icon={<User className="h-4 w-4" />} />
         <div className="grid gap-3 sm:grid-cols-2">
           {references.map((item: any, idx: number) => (
-            <div key={item.id || idx} className="text-xs space-y-0.5">
+            <div key={item.id || idx} className="resume-entry text-xs space-y-0.5 break-inside-avoid">
               <p className="font-bold text-zinc-800 dark:text-zinc-100">{item.name}</p>
               {(item.title || item.company) && (
                 <p className="text-zinc-400 font-medium text-[11px]">
@@ -954,7 +1016,7 @@ export function ResumePreviewCanvas({
       );
     }
 
-    // Default: Single Column Layout
+    // Default: Single Column Layout (Pure natural document flow)
     return (
       <div className={sectionSpacingClass}>
         {renderSummary()}
@@ -982,8 +1044,9 @@ export function ResumePreviewCanvas({
 
   return (
     <div
+      id="resume-preview-document"
       className={cn(
-        "relative shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-all origin-top select-none print:shadow-none print:border-none",
+        "resume-preview-document relative shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-all origin-top select-none print:shadow-none print:border-none print:m-0",
         fontClass,
         fontSizeClass
       )}
@@ -997,13 +1060,6 @@ export function ResumePreviewCanvas({
     >
       {renderPersonalHeader()}
       {renderLayout()}
-
-      {showWatermark && (
-        <div className="mt-8 pt-4 border-t border-zinc-150 dark:border-zinc-900 text-center select-none flex items-center justify-center gap-1.5 text-[9px] text-zinc-400 font-bold tracking-widest uppercase">
-          <Sparkles className="h-3 w-3 text-indigo-500 fill-indigo-500" />
-          <span>Created with ResumeAI Pro</span>
-        </div>
-      )}
 
       {/* Dotted Page break helpers (only visible inside digital web canvas layout preview, hidden in print mode) */}
       <div className="absolute inset-x-0 pointer-events-none print:hidden flex flex-col items-center justify-between" style={{ height: "100%", top: 0 }}>

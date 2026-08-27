@@ -46,7 +46,7 @@ export function analyzeAtsHints(resume: Resume): AtsHint[] {
       tip: "Provide a contact phone number with country prefix so recruiters can schedule interviews quickly.",
     });
   }
-  if (!pContent.linkedinUrl) {
+  if (!pContent.linkedinUrl && !pContent.linkedin) {
     hints.push({
       id: "p-linkedin",
       type: "info",

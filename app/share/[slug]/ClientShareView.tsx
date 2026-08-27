@@ -296,22 +296,36 @@ export default function ClientShareView({
       <style
         dangerouslySetInnerHTML={{
           __html: `
+        @page {
+          size: auto;
+          margin-top: 2.4cm;
+          margin-bottom: 1.4cm;
+          margin-left: 1.4cm;
+          margin-right: 1.4cm;
+        }
+        @page :first {
+          margin-top: 1.4cm;
+        }
         @media print {
-          body {
+          html, body {
             background: white !important;
             color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .no-print {
             display: none !important;
           }
           .print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
             padding: 0 !important;
             box-shadow: none !important;
+            border: none !important;
           }
         }
       `,

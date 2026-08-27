@@ -63,6 +63,8 @@ export async function generateDocx(resume: Resume): Promise<Blob> {
     if (personal.phone) contacts.push(personal.phone);
     if (personal.location) contacts.push(personal.location);
     if (personal.website) contacts.push(personal.website);
+    if (personal.githubUrl || personal.github) contacts.push(`GitHub: ${personal.githubUrl || personal.github}`);
+    if (personal.linkedinUrl || personal.linkedin) contacts.push(`LinkedIn: ${personal.linkedinUrl || personal.linkedin}`);
 
     if (contacts.length > 0) {
       children.push(

@@ -23,8 +23,8 @@ export function generatePlainText(resume: Resume): string {
     if (personal.phone) contacts.push(`Phone: ${personal.phone}`);
     if (personal.location) contacts.push(`Location: ${personal.location}`);
     if (personal.website) contacts.push(`Website: ${personal.website}`);
-    if (personal.linkedinUrl) contacts.push(`LinkedIn: ${personal.linkedinUrl}`);
-    if (personal.githubUrl) contacts.push(`GitHub: ${personal.githubUrl}`);
+    if (personal.githubUrl || personal.github) contacts.push(`GitHub: ${personal.githubUrl || personal.github}`);
+    if (personal.linkedinUrl || personal.linkedin) contacts.push(`LinkedIn: ${personal.linkedinUrl || personal.linkedin}`);
 
     text += contacts.join("  |  ") + "\n";
     text += hr;

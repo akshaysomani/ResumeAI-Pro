@@ -1193,6 +1193,34 @@ export default function ResumeEditorPage() {
                 />
                 {validationErrors.web && <p className="text-[10px] text-red-500 font-semibold">{validationErrors.web}</p>}
               </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase">GitHub Profile</label>
+                <Input
+                  value={activeContent.githubUrl || activeContent.github || ""}
+                  onChange={(e) => {
+                    handleItemChange(0, "githubUrl", e.target.value);
+                    handleItemChange(0, "github", e.target.value);
+                    checkUrl("github", e.target.value);
+                  }}
+                  placeholder="https://github.com/username"
+                  className={cn(validationErrors.github ? "border-red-500" : "")}
+                />
+                {validationErrors.github && <p className="text-[10px] text-red-500 font-semibold">{validationErrors.github}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase">LinkedIn Profile</label>
+                <Input
+                  value={activeContent.linkedinUrl || activeContent.linkedin || ""}
+                  onChange={(e) => {
+                    handleItemChange(0, "linkedinUrl", e.target.value);
+                    handleItemChange(0, "linkedin", e.target.value);
+                    checkUrl("linkedin", e.target.value);
+                  }}
+                  placeholder="https://linkedin.com/in/username"
+                  className={cn(validationErrors.linkedin ? "border-red-500" : "")}
+                />
+                {validationErrors.linkedin && <p className="text-[10px] text-red-500 font-semibold">{validationErrors.linkedin}</p>}
+              </div>
             </div>
 
             {/* Profile Picture Rotation option */}
@@ -3292,12 +3320,12 @@ export default function ResumeEditorPage() {
         className="bg-zinc-100 dark:bg-zinc-900/30 overflow-auto h-full shrink-0 flex flex-col relative resume-print-wrapper"
         style={{ width: `${rightWidth}px` }}
       >
-        {/* Preview Zoom Controls header */}
-        <div className="sticky top-0 bg-zinc-50/90 dark:bg-zinc-950/90 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center justify-between z-10 select-none print:hidden">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+        {/* Preview Zoom Controls header - completely isolated from the printable document */}
+        <div className="preview-toolbar sticky top-0 bg-zinc-50/90 dark:bg-zinc-950/90 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center justify-between z-10 select-none no-print print:hidden">
+          <span className="live-render-preview text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
             <Maximize className="h-3 w-3" /> Live Render Preview
           </span>
-          <div className="flex items-center gap-2">
+          <div className="zoom-controls flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -3307,7 +3335,7 @@ export default function ResumeEditorPage() {
             >
               -
             </Button>
-            <span className="text-[10px] font-bold w-10 text-center">{Math.round(zoom * 100)}%</span>
+            <span className="zoom-percentage text-[10px] font-bold w-10 text-center">{Math.round(zoom * 100)}%</span>
             <Button
               variant="outline"
               size="icon"
@@ -3329,8 +3357,8 @@ export default function ResumeEditorPage() {
         </div>
 
         {/* Preview canvas viewport */}
-        <div className="flex-1 flex justify-center p-6 overflow-y-auto min-h-0 bg-zinc-100 dark:bg-zinc-900/10">
-          <ResumePreviewCanvas resume={currentResume} zoom={zoom} previewTemplateId={previewTemplateId} showWatermark={userPlan !== "pro"} />
+        <div className="resume-viewport flex-1 flex justify-center p-6 overflow-y-auto min-h-0 bg-zinc-100 dark:bg-zinc-900/10">
+          <ResumePreviewCanvas resume={currentResume} zoom={zoom} previewTemplateId={previewTemplateId} />
         </div>
       </div>
 

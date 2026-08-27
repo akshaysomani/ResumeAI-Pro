@@ -121,6 +121,8 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
               linkedinUrl: "",
               githubUrl: "",
               portfolioUrl: "",
+              github: "",
+              linkedin: "",
             },
           },
           {
@@ -316,6 +318,8 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
         linkedinUrl: "",
         githubUrl: "",
         portfolioUrl: "",
+        github: "",
+        linkedin: "",
       } : [],
     };
 

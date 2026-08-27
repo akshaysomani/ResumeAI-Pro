@@ -128,26 +128,49 @@ body {
   background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 55%);
 }
 
-/* Print margins overrides for resume templates */
+@page {
+  size: auto;
+  margin-top: 2.4cm; /* Page 2+ top spacing (1.4cm normal + 1.0cm (~38px) extra whitespace) */
+  margin-bottom: 1.4cm;
+  margin-left: 1.4cm;
+  margin-right: 1.4cm;
+}
+
+@page :first {
+  margin-top: 1.4cm; /* Page 1 top spacing */
+}
+
 @media print {
   html, body {
     background-color: white !important;
+    background: white !important;
     color: black !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     height: auto !important;
+    min-height: 100% !important;
     overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  /* Completely eliminate all editor-only UI, toolbars, zoom controls, and headers in print */
   aside,
   header,
   footer,
   nav,
   button,
   .no-print,
+  .preview-toolbar,
+  .live-render-preview,
+  .zoom-controls,
+  .zoom-percentage,
+  [class*="print:hidden"],
   .print\:hidden {
     display: none !important;
   }
+
   main,
   #main-content,
   .max-w-7xl,
@@ -162,12 +185,14 @@ body {
     overflow: visible !important;
     position: static !important;
   }
+
   .print-page {
     margin: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
   }
+
   /* Resume Editor specific print layout resets */
   .editor-workspace-container {
     display: block !important;
@@ -176,25 +201,74 @@ body {
     padding: 0 !important;
     overflow: visible !important;
   }
+
   .resume-print-wrapper {
     width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
+    min-height: auto !important;
     overflow: visible !important;
     background: transparent !important;
     padding: 0 !important;
+    margin: 0 auto !important;
     position: static !important;
+    display: block !important;
   }
-  .resume-print-wrapper > div {
+
+  .resume-viewport {
     padding: 0 !important;
+    margin: 0 auto !important;
     background: transparent !important;
     display: block !important;
     overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
   }
-  .resume-print-wrapper [style*="transform"] {
+
+  .resume-preview-document {
     transform: none !important;
     margin: 0 auto !important;
+    padding: 0 !important; /* `@page` margin handles the margins */
+    box-sizing: border-box !important;
     box-shadow: none !important;
     border: none !important;
+    min-height: auto !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Clean multi-page break control */
+  .break-inside-avoid,
+  .resume-section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .resume-entry {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .break-after-avoid,
+  .resume-section-header {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .break-before-auto {
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  /* Hyperlinks styling in print */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
   }
 }
 

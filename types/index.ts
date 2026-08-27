@@ -166,6 +166,12 @@ export interface PersonalInformation {
   linkedinUrl?: string;
   githubUrl?: string;
   portfolioUrl?: string;
+  github?: string;
+  linkedin?: string;
+  headline?: string;
+  avatarUrl?: string;
+  avatarRotation?: number;
+  isVisible?: boolean;
 }
 
 export interface Education {
