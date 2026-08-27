@@ -67,7 +67,15 @@ export function generatePlainText(resume: Resume): string {
       text += `${edu.school}`;
       if (edu.location) text += `, ${edu.location}`;
       text += ` | ${edu.startDate || ""} - ${edu.currentlyStudying ? "Present" : edu.endDate || ""}\n`;
-      if (edu.gpa) text += `GPA: ${edu.gpa}\n`;
+      if (edu.gpa) {
+        const type = edu.scoreType || "GPA";
+        if (type === "Percentage" || type === "Percentage (%)") {
+          const suffix = edu.gpa.endsWith("%") ? "" : "%";
+          text += `Percentage: ${edu.gpa}${suffix}\n`;
+        } else {
+          text += `${type}: ${edu.gpa}\n`;
+        }
+      }
       if (edu.description) text += `${edu.description}\n`;
       text += "\n";
     });

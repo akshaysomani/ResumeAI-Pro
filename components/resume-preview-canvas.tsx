@@ -524,7 +524,18 @@ export function ResumePreviewCanvas({
           </div>
           <div className="flex justify-between text-[10px] text-zinc-450">
             {item.location && <span>{item.location}</span>}
-            {item.gpa && <span className="font-semibold text-zinc-500">GPA: {item.gpa}</span>}
+            {item.gpa && (
+              <span className="font-semibold text-zinc-500">
+                {(() => {
+                  const type = item.scoreType || "GPA";
+                  if (type === "Percentage" || type === "Percentage (%)") {
+                    const suffix = item.gpa.endsWith("%") ? "" : "%";
+                    return `Percentage: ${item.gpa}${suffix}`;
+                  }
+                  return `${type}: ${item.gpa}`;
+                })()}
+              </span>
+            )}
           </div>
         </div>
       )
@@ -1043,13 +1054,40 @@ export function ResumePreviewCanvas({
   const heightDimension = paperSize === "letter" ? "27.94cm" : "29.7cm";
 
   return (
-    <div
-      id="resume-preview-document"
-      className={cn(
-        "resume-preview-document relative shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-all origin-top select-none print:shadow-none print:border-none print:m-0",
-        fontClass,
-        fontSizeClass
-      )}
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @page {
+              size: auto;
+              margin-top: 2.4cm;
+              margin-bottom: 1.4cm;
+              margin-left: 1.4cm;
+              margin-right: 1.4cm;
+
+              @top-left { content: ""; }
+              @top-right { content: ""; }
+              @bottom-left { content: ""; }
+              @bottom-right {
+                content: counter(page) "/" counter(pages);
+                font-size: 8pt;
+                color: #71717a;
+                font-family: sans-serif;
+              }
+            }
+            @page :first {
+              margin-top: 1.4cm;
+            }
+          `,
+        }}
+      />
+      <div
+        id="resume-preview-document"
+        className={cn(
+          "resume-preview-document relative shadow-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-all origin-top select-none print:shadow-none print:border-none print:m-0",
+          fontClass,
+          fontSizeClass
+        )}
       style={{
         width: widthDimension,
         minHeight: heightDimension,
@@ -1072,5 +1110,6 @@ export function ResumePreviewCanvas({
         </div>
       </div>
     </div>
+    </>
   );
 }

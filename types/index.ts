@@ -181,6 +181,7 @@ export interface Education {
   degree?: string;
   major?: string;
   gpa?: string;
+  scoreType?: string;
   duration?: string;
   orderIndex: number;
   location?: string;

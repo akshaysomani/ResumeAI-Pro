@@ -79,6 +79,14 @@ import {
 import { cn } from "@/lib/utils";
 import type { Resume, ResumeSection, SectionType } from "@/types";
 
+function getDefaultScoreType(degree: string): string {
+  const d = (degree || "").toLowerCase().trim();
+  if (/\b(10th|10|ssc|matric)\b/.test(d)) return "Percentage (%)";
+  if (/\b(12th|12|hsc|intermediate)\b/.test(d)) return "Percentage (%)";
+  if (/\b(bachelor|college|university|b\.?tech|b\.?e\.?|b\.?sc|b\.?ca|b\.?ba|undergrad)\b/.test(d)) return "CGPA";
+  return "GPA";
+}
+
 export default function ResumeEditorPage() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("id") || "editor-workspace";
@@ -1313,11 +1321,24 @@ export default function ResumeEditorPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase">GPA</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Score Type</label>
+                    <select
+                      value={item.scoreType || getDefaultScoreType(item.degree)}
+                      onChange={(e) => handleItemChange(idx, "scoreType", e.target.value)}
+                      className="w-full h-9 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200"
+                    >
+                      <option value="Percentage (%)">Percentage (%)</option>
+                      <option value="GPA">GPA</option>
+                      <option value="CGPA">CGPA</option>
+                      <option value="CPI">CPI</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Score</label>
                     <Input
                       value={item.gpa || ""}
                       onChange={(e) => handleItemChange(idx, "gpa", e.target.value)}
-                      placeholder="3.85 / 4.0"
+                      placeholder="74.66, 3.8, or 8.31"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1343,7 +1364,7 @@ export default function ResumeEditorPage() {
               type="button"
               variant="outline"
               className="w-full text-xs py-2.5 font-bold"
-              onClick={() => addListItem({ school: "", degree: "", major: "", gpa: "", location: "", duration: "" })}
+              onClick={() => addListItem({ school: "", degree: "", major: "", gpa: "", scoreType: "", location: "", duration: "" })}
             >
               <Plus className="mr-1.5 h-4 w-4" /> Add Education Row
             </Button>

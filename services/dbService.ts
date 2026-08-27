@@ -345,6 +345,14 @@ export async function savePersonalInformation(resumeId: string, info: Omit<Perso
 }
 
 // Education History
+function getDefaultScoreType(degree: string): string {
+  const d = (degree || "").toLowerCase().trim();
+  if (/\b(10th|10|ssc|matric)\b/.test(d)) return "Percentage (%)";
+  if (/\b(12th|12|hsc|intermediate)\b/.test(d)) return "Percentage (%)";
+  if (/\b(bachelor|college|university|b\.?tech|b\.?e\.?|b\.?sc|b\.?ca|b\.?ba|undergrad)\b/.test(d)) return "CGPA";
+  return "GPA";
+}
+
 export async function getEducation(resumeId: string): Promise<Education[]> {
   const query = `SELECT * FROM public.education WHERE resume_id = $1 ORDER BY order_index ASC`;
   const { rows } = await db.query(query, [resumeId]);
@@ -355,6 +363,7 @@ export async function getEducation(resumeId: string): Promise<Education[]> {
     degree: row.degree || "",
     major: row.major || "",
     gpa: row.gpa || "",
+    scoreType: row.score_type || "GPA",
     duration: row.duration || "",
     orderIndex: row.order_index,
     location: row.location || "",
@@ -374,10 +383,10 @@ export async function saveEducation(resumeId: string, items: Omit<Education, "id
       const item = items[i];
       const query = `
         INSERT INTO public.education (
-          resume_id, school, degree, major, gpa, duration, order_index,
+          resume_id, school, degree, major, gpa, score_type, duration, order_index,
           location, start_date, end_date, currently_studying, description
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       `;
       const values = [
         resumeId,
@@ -385,6 +394,7 @@ export async function saveEducation(resumeId: string, items: Omit<Education, "id
         item.degree || null,
         item.major || null,
         item.gpa || null,
+        item.scoreType || getDefaultScoreType(item.degree || ""),
         item.duration || null,
         i,
         item.location || null,

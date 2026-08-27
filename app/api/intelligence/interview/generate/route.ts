@@ -30,7 +30,9 @@ async function getResumeContextText(resumeId: string): Promise<string> {
     if (eduRows.length > 0) {
       context += `Education:\n`;
       eduRows.forEach((ed: any) => {
-        context += `- Degree: ${ed.degree || ""} ${ed.major ? `in ${ed.major}` : ""} from ${ed.school} (${ed.duration || ""})\n  GPA: ${ed.gpa || ""}\n  Details: ${ed.description || ""}\n`;
+        const scoreType = ed.score_type || "GPA";
+        const scoreDisplay = ed.gpa ? ((scoreType === "Percentage" || scoreType === "Percentage (%)") ? `${ed.gpa}${ed.gpa.endsWith("%") ? "" : "%"}` : ed.gpa) : "";
+        context += `- Degree: ${ed.degree || ""} ${ed.major ? `in ${ed.major}` : ""} from ${ed.school} (${ed.duration || ""})\n  ${scoreType}: ${scoreDisplay}\n  Details: ${ed.description || ""}\n`;
       });
       context += `\n`;
     }

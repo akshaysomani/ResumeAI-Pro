@@ -25,7 +25,11 @@ function formatResumeToText(resume: any): string {
           if (item.school) parts.push(`School: ${item.school}`);
           if (item.degree) parts.push(`Degree: ${item.degree}`);
           if (item.field) parts.push(`Field: ${item.field}`);
-          if (item.gpa) parts.push(`GPA: ${item.gpa}`);
+          if (item.gpa) {
+            const scoreType = item.scoreType || "GPA";
+            const scoreDisplay = (scoreType === "Percentage" || scoreType === "Percentage (%)") ? `${item.gpa}${item.gpa.endsWith("%") ? "" : "%"}` : item.gpa;
+            parts.push(`${scoreType}: ${scoreDisplay}`);
+          }
           if (item.title) parts.push(`Title: ${item.title}`);
           if (item.url) parts.push(`Link: ${item.url}`);
           if (item.technologies) parts.push(`Technologies: ${item.technologies}`);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import type { Resume } from "@/types";
 import { ResumePreviewCanvas } from "@/components/resume-preview-canvas";
+import { useToast } from "@/components/ui/toast";
 import { generateDocx } from "@/lib/docx-generator";
 import { generatePlainText } from "@/lib/text-generator";
 import { logShareAnalyticsAction, logResumeExportAction } from "@/app/actions/shareActions";
@@ -49,6 +50,7 @@ export default function ClientShareView({
 
   // Exporters states
   const [downloading, setDownloading] = useState<string | null>(null);
+  const { success } = useToast();
 
   // Recruiter contact dialog state
   const [contactOpen, setContactOpen] = useState(false);

@@ -207,12 +207,18 @@ export async function generateDocx(resume: Resume): Promise<Blob> {
       );
 
       if (edu.gpa) {
+        const type = edu.scoreType || "GPA";
+        let scoreLabel = `${type}: ${edu.gpa}`;
+        if (type === "Percentage" || type === "Percentage (%)") {
+          const suffix = edu.gpa.endsWith("%") ? "" : "%";
+          scoreLabel = `Percentage: ${edu.gpa}${suffix}`;
+        }
         children.push(
           new Paragraph({
             spacing: { after: 60 },
             children: [
               new TextRun({
-                text: `GPA: ${edu.gpa}`,
+                text: scoreLabel,
                 size: 20,
               }),
             ],
