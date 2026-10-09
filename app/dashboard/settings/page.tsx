@@ -13,7 +13,7 @@ import { LANGUAGES } from "@/lib/translations";
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { theme, toggleTheme, setTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const { success, error } = useToast();
   const { setLocale } = useTranslation();
 
@@ -34,10 +34,6 @@ export default function SettingsPage() {
       try {
         const settings = await getUserSettings(user.id);
         if (settings) {
-          // Sync Theme context
-          if (settings.theme === "light" || settings.theme === "dark") {
-            setTheme(settings.theme);
-          }
           const lang = settings.language || "en";
           setPreferredLang(lang);
           setLocale(lang);
@@ -59,7 +55,7 @@ export default function SettingsPage() {
       }
     }
     loadSettings();
-  }, [user?.id]);
+  }, [user, setLocale]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -82,8 +78,9 @@ export default function SettingsPage() {
       await updateUserSettings(user.id, payload);
       setLocale(preferredLang);
       success("Workspace preferences updated successfully.");
-    } catch (err: any) {
-      error(err.message || "Failed to save settings.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save settings.";
+      error(message);
     } finally {
       setSaving(false);
     }

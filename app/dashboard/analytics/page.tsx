@@ -6,34 +6,121 @@ import { supabase } from "@/lib/supabase";
 import { queryResumesAction } from "@/app/actions/resumeActions";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Download, Eye, TrendingUp, RefreshCcw } from "lucide-react";
+import { BarChart3, Download, Eye, RefreshCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { ExportedFile } from "@/types";
+
+interface ExportFileRow {
+  id: string;
+  resume_id: string;
+  file_url: string;
+  file_type: string;
+  created_at: string;
+}
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const [exports, setExports] = useState<ExportedFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [viewCount, setViewCount] = useState(0);
 
-  const fetchAnalytics = async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      // Load exported files history log from Supabase
-      const { data, error } = await supabase
-        .from("exported_files")
-        .select(`
-          id,
-          resume_id,
-          file_url,
-          file_type,
-          created_at
-        `)
-        .order("created_at", { ascending: false });
+  useEffect(() => {
+    let isMounted = true;
 
-      if (!error && data) {
+    async function load() {
+      if (!user?.id) {
+        if (isMounted) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const [exportedFilesRes, resumesDataRes] = await Promise.allSettled([
+          supabase
+            .from("exported_files")
+            .select(`
+              id,
+              resume_id,
+              file_url,
+              file_type,
+              created_at
+            `)
+            .order("created_at", { ascending: false })
+            .limit(50),
+          queryResumesAction({ userId: user.id }),
+        ]);
+
+        if (!isMounted) return;
+
+        if (
+          exportedFilesRes.status === "fulfilled" &&
+          !exportedFilesRes.value.error &&
+          exportedFilesRes.value.data
+        ) {
+          const rawRows = exportedFilesRes.value.data as unknown as ExportFileRow[];
+          setExports(
+            rawRows.map((d) => ({
+              id: d.id,
+              resumeId: d.resume_id,
+              fileUrl: d.file_url,
+              fileType: d.file_type as "pdf" | "docx",
+              createdAt: d.created_at,
+            }))
+          );
+        }
+
+        if (
+          resumesDataRes.status === "fulfilled" &&
+          resumesDataRes.value &&
+          resumesDataRes.value.length > 0
+        ) {
+          setViewCount(resumesDataRes.value.length * 18);
+        }
+      } catch (err) {
+        console.warn("Analytics data fetch warning:", err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  const handleRefresh = async () => {
+    if (!user?.id) return;
+    setRefreshing(true);
+    try {
+      const [exportedFilesRes, resumesDataRes] = await Promise.allSettled([
+        supabase
+          .from("exported_files")
+          .select(`
+            id,
+            resume_id,
+            file_url,
+            file_type,
+            created_at
+          `)
+          .order("created_at", { ascending: false })
+          .limit(50),
+        queryResumesAction({ userId: user.id }),
+      ]);
+
+      if (
+        exportedFilesRes.status === "fulfilled" &&
+        !exportedFilesRes.value.error &&
+        exportedFilesRes.value.data
+      ) {
+        const rawRows = exportedFilesRes.value.data as unknown as ExportFileRow[];
         setExports(
-          data.map((d: any) => ({
+          rawRows.map((d) => ({
             id: d.id,
             resumeId: d.resume_id,
             fileUrl: d.file_url,
@@ -42,22 +129,20 @@ export default function AnalyticsPage() {
           }))
         );
       }
-      
-      // Fetch resumes count from PostgreSQL via Server Action
-      const resumesData = await queryResumesAction({ userId: user.id });
-      if (resumesData && resumesData.length > 0) {
-        setViewCount(resumesData.length * 18);
+
+      if (
+        resumesDataRes.status === "fulfilled" &&
+        resumesDataRes.value &&
+        resumesDataRes.value.length > 0
+      ) {
+        setViewCount(resumesDataRes.value.length * 18);
       }
     } catch (err) {
-      console.warn("Analytics DB query skipped:", err);
+      console.warn("Analytics data refresh warning:", err);
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -131,8 +216,13 @@ export default function AnalyticsPage() {
         <CardHeader>
           <CardTitle className="text-sm font-bold flex items-center justify-between">
             <span>Export & Download logs</span>
-            <button onClick={fetchAnalytics} className="text-zinc-400 hover:text-indigo-600">
-              <RefreshCcw className="h-3.5 w-3.5" />
+            <button
+              onClick={handleRefresh}
+              disabled={loading || refreshing}
+              aria-label="Refresh analytics data"
+              className="p-1 rounded text-zinc-400 hover:text-indigo-600 dark:hover:text-leaf transition-colors focus-visible:outline-2 focus-visible:outline-leaf disabled:opacity-50"
+            >
+              <RefreshCcw className={cn("h-3.5 w-3.5", refreshing && "animate-spin text-leaf")} />
             </button>
           </CardTitle>
           <CardDescription className="text-xs">

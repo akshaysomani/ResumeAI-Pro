@@ -3,20 +3,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+  "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#111713] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-indigo-600 text-white hover:bg-indigo-500 shadow-md shadow-indigo-600/10 dark:bg-indigo-600 dark:hover:bg-indigo-500",
+          "bg-indigo-600 text-white hover:bg-indigo-500 shadow-md shadow-indigo-600/10 dark:bg-leaf dark:text-[#111713] dark:font-semibold dark:hover:bg-[#96d6ac]",
         secondary:
-          "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800/80 dark:text-zinc-100 dark:hover:bg-zinc-700/80",
+          "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700/80 dark:border dark:border-zinc-700",
         outline:
-          "border border-zinc-200 bg-transparent hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900 dark:text-zinc-200",
-        ghost: "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100",
-        link: "text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-400",
+          "border border-zinc-200 bg-transparent hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:text-zinc-200",
+        ghost:
+          "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-100",
+        link:
+          "text-indigo-600 underline-offset-4 hover:underline dark:text-leaf",
         danger:
-          "bg-red-600 text-white hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600 shadow-md shadow-red-600/10",
+          "bg-red-600 text-white hover:bg-red-500 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 shadow-md shadow-red-600/10",
       },
       size: {
         default: "h-10 px-4 py-2",
